@@ -1,11 +1,13 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const VideoDebugApp = dynamic(() => import('@/components/VideoDebugApp'), { ssr: false });
+const PlayerDebugApp = dynamic(() => import("@/components/PlayerDebugApp"), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
     <main>
-      <VideoDebugApp />
+      <PlayerDebugApp />
     </main>
   );
 }

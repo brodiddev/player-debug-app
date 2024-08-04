@@ -11,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Moon, Sun, Volume2, VolumeX } from "lucide-react";
+import { Moon, Sun, Volume2, VolumeX, Video } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
@@ -94,7 +94,7 @@ const VideoControls = ({
   );
 };
 
-const VideoDebugApp = () => {
+const PlayerDebugApp = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [playerLibrary, setPlayerLibrary] = useState("shaka-latest");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -206,140 +206,159 @@ const VideoDebugApp = () => {
 
   return (
     <div
-      className={`p-6 ${
+      className={`min-h-screen flex flex-col ${
         darkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
       }`}
     >
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Video Debug App</h1>
-        <div className="flex items-center">
-          <Switch
-            checked={darkMode}
-            onCheckedChange={setDarkMode}
-            className="mr-2"
-          />
-          {darkMode ? (
-            <Moon className="h-6 w-6" />
-          ) : (
-            <Sun className="h-6 w-6" />
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex space-x-2">
-          <Input
-            type="text"
-            placeholder="Enter video URL"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
-            className="flex-grow"
-          />
-          <Select value={playerLibrary} onValueChange={setPlayerLibrary}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Select player library" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="shaka-latest">
-                Shaka Player (Latest)
-              </SelectItem>
-              <SelectItem value="shaka-3.0.0">Shaka Player 3.0.0</SelectItem>
-              <SelectItem value="hls-latest">HLS.js (Latest)</SelectItem>
-              <SelectItem value="hls-1.0.0">HLS.js 1.0.0</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={loadVideo}>Load</Button>
-        </div>
-
-        <div
-          className="relative"
-          onMouseEnter={() => setIsControlsVisible(true)}
-          onMouseLeave={() => setIsControlsVisible(false)}
-        >
-          <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-            <video
-              ref={videoRef}
-              className="w-full h-full"
-              onTimeUpdate={handleVideoTimeUpdate}
-            />
+      <header className="bg-gray-900 text-white py-3 px-6 shadow-md">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Video className="h-6 w-6 text-blue-400" />
+            <h1 className="text-xl font-medium">Player Debug App</h1>
           </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">Dark Mode</span>
+            <Switch
+              checked={darkMode}
+              onCheckedChange={setDarkMode}
+              className="mr-2"
+            />
+            {darkMode ? (
+              <Moon className="h-5 w-5 text-blue-400" />
+            ) : (
+              <Sun className="h-5 w-5 text-yellow-400" />
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-grow container mx-auto p-6">
+        <div className="space-y-6">
+          <div className="flex space-x-2">
+            <Input
+              type="text"
+              placeholder="Enter video URL"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="flex-grow"
+            />
+            <Select value={playerLibrary} onValueChange={setPlayerLibrary}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Select player library" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="shaka-latest">
+                  Shaka Player (Latest)
+                </SelectItem>
+                <SelectItem value="shaka-3.0.0">Shaka Player 3.0.0</SelectItem>
+                <SelectItem value="hls-latest">HLS.js (Latest)</SelectItem>
+                <SelectItem value="hls-1.0.0">HLS.js 1.0.0</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={loadVideo}>Load</Button>
+          </div>
+
           <div
-            className={`absolute top-0 right-0 h-full bg-gray-800 bg-opacity-75 text-white transition-all duration-300 ease-in-out ${
-              isControlsVisible ? "w-64 opacity-100" : "w-0 opacity-0"
-            } overflow-hidden`}
+            className="relative"
+            onMouseEnter={() => setIsControlsVisible(true)}
+            onMouseLeave={() => setIsControlsVisible(false)}
           >
-            <VideoControls
-              playbackRate={playbackRate}
-              setPlaybackRate={setPlaybackRate}
-              currentTime={currentTime}
-              duration={duration}
-              volume={volume}
-              setVolume={setVolume}
-              isMuted={isMuted}
-              setIsMuted={setIsMuted}
-              videoRef={videoRef}
-              onControlsInteraction={handleControlsInteraction}
-            />
+            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+              <video
+                ref={videoRef}
+                className="w-full h-full"
+                onTimeUpdate={handleVideoTimeUpdate}
+              />
+            </div>
+            <div
+              className={`absolute top-0 right-0 h-full bg-gray-800 bg-opacity-75 text-white transition-all duration-300 ease-in-out ${
+                isControlsVisible ? "w-64 opacity-100" : "w-0 opacity-0"
+              } overflow-hidden`}
+            >
+              <VideoControls
+                playbackRate={playbackRate}
+                setPlaybackRate={setPlaybackRate}
+                currentTime={currentTime}
+                duration={duration}
+                volume={volume}
+                setVolume={setVolume}
+                isMuted={isMuted}
+                setIsMuted={setIsMuted}
+                videoRef={videoRef}
+                onControlsInteraction={handleControlsInteraction}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            <Tabs defaultValue="buffer">
+              <TabsList className="mb-4">
+                <TabsTrigger value="buffer">Buffer</TabsTrigger>
+                <TabsTrigger value="network">Network</TabsTrigger>
+                <TabsTrigger value="logs">Logs</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="buffer">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={bufferData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="time" />
+                      <YAxis width={50} />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="bufferSize"
+                        stroke="#8884d8"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="network">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                  <h3 className="font-bold mb-2">Network Statistics</h3>
+                  <div>Download Speed: {networkStats.downloadSpeed} Mbps</div>
+                  <div>Latency: {networkStats.latency} ms</div>
+                </div>
+              </TabsContent>
+              <TabsContent value="logs">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-64 overflow-y-auto">
+                  {logs.map((log, index) => (
+                    <div key={index} className="mb-1">
+                      <span className="text-sm text-gray-500">{log.time}</span>:{" "}
+                      {log.message}
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <Tabs defaultValue="buffer">
-            <TabsList className="mb-4">
-              <TabsTrigger value="buffer">Buffer</TabsTrigger>
-              <TabsTrigger value="network">Network</TabsTrigger>
-              <TabsTrigger value="logs">Logs</TabsTrigger>
-            </TabsList>
+        <Alert className="mt-6">
+          <AlertTitle>Note</AlertTitle>
+          <AlertDescription>
+            This is a debug page. Some features may not work as expected in all
+            browsers or with all video sources.
+          </AlertDescription>
+        </Alert>
+      </main>
 
-            <TabsContent value="buffer">
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={bufferData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis width={50} />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="bufferSize"
-                      stroke="#8884d8"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="network">
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h3 className="font-bold mb-2">Network Statistics</h3>
-                <div>Download Speed: {networkStats.downloadSpeed} Mbps</div>
-                <div>Latency: {networkStats.latency} ms</div>
-              </div>
-            </TabsContent>
-            <TabsContent value="logs">
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-64 overflow-y-auto">
-                {logs.map((log, index) => (
-                  <div key={index} className="mb-1">
-                    <span className="text-sm text-gray-500">{log.time}</span>:{" "}
-                    {log.message}
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+      <footer className="bg-gray-100 dark:bg-gray-800 py-4">
+        <div className="container mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
+          <p>
+            Contact:{" "}
+            <a href="mailto:brodi@sooplive.com" className="hover:underline">
+              brodi@sooplive.com
+            </a>
+          </p>
         </div>
-      </div>
-
-      <Alert className="mt-6">
-        <AlertTitle>Note</AlertTitle>
-        <AlertDescription>
-          This is a debug page. Some features may not work as expected in all
-          browsers or with all video sources.
-        </AlertDescription>
-      </Alert>
+      </footer>
     </div>
   );
 };
 
-export default VideoDebugApp;
+export default PlayerDebugApp;
