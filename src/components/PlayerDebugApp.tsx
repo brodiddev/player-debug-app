@@ -120,27 +120,36 @@ const PlayerDebugApp = () => {
       if (scriptRef.current) {
         document.body.removeChild(scriptRef.current);
       }
-
       const script = document.createElement("script");
       scriptRef.current = script;
-
       const [library, version] = playerLibrary.split("-");
       const actualVersion = showCustomVersion ? customVersion : version;
+
+      // 올바르지 않는 버전 체크
+      const versionRegex = /^\d+\.\d+\.\d+$/;
+      if (!versionRegex.test(actualVersion)) {
+        const error = new Error(`Invalid version format: ${actualVersion}`);
+        addLog(`Error: ${error.message}`);
+        reject(error);
+        return;
+      }
 
       if (library === "shaka") {
         script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`;
       } else {
         script.src = `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
       }
-
       script.async = true;
       script.onload = () => {
         initPlayer();
         logPlayerInfo(library, actualVersion);
         resolve();
       };
-      script.onerror = (error) => {
-        addLog(`Failed to load library: ${error}`);
+      script.onerror = () => {
+        const error = new Error(
+          `Failed to load library: ${library} version ${actualVersion}`
+        );
+        // addLog(error.message);
         reject(error);
       };
       document.body.appendChild(script);
@@ -190,7 +199,6 @@ const PlayerDebugApp = () => {
   const loadVideo = async () => {
     try {
       await loadPlayerLibrary();
-
       const [library] = playerLibrary.split("-");
       if (library === "shaka") {
         await playerRef.current.load(videoUrl);
@@ -210,7 +218,7 @@ const PlayerDebugApp = () => {
   };
 
   const onError = (error) => {
-    addLog(`Error: ${error.message}`);
+    addLog(`Error: ${error.message || "An unknown error occurred"}`);
   };
 
   const handleVideoTimeUpdate = () => {
