@@ -96,7 +96,9 @@ const VideoControls = ({
 
 const PlayerDebugApp = () => {
   const [videoUrl, setVideoUrl] = useState("");
-  const [playerLibrary, setPlayerLibrary] = useState("shaka-latest");
+  const [playerLibrary, setPlayerLibrary] = useState("shaka-4.10.9");
+  const [customVersion, setCustomVersion] = useState("");
+  const [showCustomVersion, setShowCustomVersion] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -113,24 +115,43 @@ const PlayerDebugApp = () => {
   const playerRef = useRef(null);
 
   useEffect(() => {
-    loadPlayerLibrary();
-  }, [playerLibrary]);
+    if (!showCustomVersion) {
+      loadPlayerLibrary();
+    }
+  }, [playerLibrary, customVersion, showCustomVersion]);
 
   const loadPlayerLibrary = () => {
+    if (showCustomVersion && !customVersion) {
+      console.log("Waiting for custom version input");
+      return;
+    }
+
     const script = document.createElement("script");
     const [library, version] = playerLibrary.split("-");
+    const actualVersion = showCustomVersion ? customVersion : version;
+
     if (library === "shaka") {
-      script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${version}/shaka-player.compiled.js`;
+      script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`;
     } else {
-      script.src = `https://cdn.jsdelivr.net/npm/hls.js@${version}`;
+      script.src = `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
     }
     script.async = true;
-    script.onload = initPlayer;
+    script.onload = () => {
+      initPlayer();
+      logPlayerInfo(library, actualVersion);
+    };
     document.body.appendChild(script);
 
     return () => {
       document.body.removeChild(script);
     };
+  };
+
+  const logPlayerInfo = (library, version) => {
+    console.log(
+      `Current player: ${library === "shaka" ? "Shaka Player" : "hls.js"}`
+    );
+    console.log(`Version: ${version}`);
   };
 
   const initPlayer = () => {
@@ -161,6 +182,11 @@ const PlayerDebugApp = () => {
   };
 
   const loadVideo = async () => {
+    if (showCustomVersion && !customVersion) {
+      addLog("Please enter a custom version before loading the video");
+      return;
+    }
+
     if (playerRef.current) {
       try {
         const [library] = playerLibrary.split("-");
@@ -175,6 +201,9 @@ const PlayerDebugApp = () => {
       } catch (e) {
         onError(e);
       }
+    } else {
+      addLog("Player not initialized. Loading library...");
+      loadPlayerLibrary();
     }
   };
 
@@ -202,6 +231,21 @@ const PlayerDebugApp = () => {
 
   const handleControlsInteraction = () => {
     setIsControlsVisible(true);
+  };
+
+  const handlePlayerLibraryChange = (value) => {
+    setPlayerLibrary(value);
+    setShowCustomVersion(value === "shaka-custom" || value === "hls-custom");
+    if (value !== "shaka-custom" && value !== "hls-custom") {
+      setCustomVersion("");
+    }
+  };
+
+  const handleCustomVersionChange = (e) => {
+    const value = e.target.value;
+    if (/^(\d+\.){0,2}\d*$/.test(value)) {
+      setCustomVersion(value);
+    }
   };
 
   return (
@@ -242,19 +286,39 @@ const PlayerDebugApp = () => {
               onChange={(e) => setVideoUrl(e.target.value)}
               className="flex-grow"
             />
-            <Select value={playerLibrary} onValueChange={setPlayerLibrary}>
+            <Select
+              value={playerLibrary}
+              onValueChange={handlePlayerLibraryChange}
+            >
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="Select player library" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="shaka-latest">
-                  Shaka Player (Latest)
+                <SelectItem value="shaka-4.10.9">
+                  Shaka Player 4.10.9
                 </SelectItem>
-                <SelectItem value="shaka-3.0.0">Shaka Player 3.0.0</SelectItem>
-                <SelectItem value="hls-latest">HLS.js (Latest)</SelectItem>
-                <SelectItem value="hls-1.0.0">HLS.js 1.0.0</SelectItem>
+                <SelectItem value="shaka-4.8.4">Shaka Player 4.8.4</SelectItem>
+                <SelectItem value="shaka-custom">
+                  Shaka Player Version settings
+                </SelectItem>
+                <SelectItem value="hls-0.12.4">hls.js 0.12.4</SelectItem>
+                <SelectItem value="hls-1.3.0">hls.js 1.3.0</SelectItem>
+                <SelectItem value="hls-1.5.13">hls.js 1.5.13</SelectItem>
+                <SelectItem value="hls-custom">
+                  hls.js Version settings
+                </SelectItem>
               </SelectContent>
             </Select>
+
+            {showCustomVersion && (
+              <Input
+                type="text"
+                placeholder="Enter version (x.x.x)"
+                value={customVersion}
+                onChange={handleCustomVersionChange}
+                className="w-[150px]"
+              />
+            )}
             <Button onClick={loadVideo}>Load</Button>
           </div>
 
