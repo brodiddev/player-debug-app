@@ -113,38 +113,38 @@ const PlayerDebugApp = () => {
 
   const videoRef = useRef(null);
   const playerRef = useRef(null);
-
-  useEffect(() => {
-    if (!showCustomVersion) {
-      loadPlayerLibrary();
-    }
-  }, [playerLibrary, customVersion, showCustomVersion]);
+  const scriptRef = useRef(null);
 
   const loadPlayerLibrary = () => {
-    if (showCustomVersion && !customVersion) {
-      console.log("Waiting for custom version input");
-      return;
-    }
+    return new Promise((resolve, reject) => {
+      if (scriptRef.current) {
+        document.body.removeChild(scriptRef.current);
+      }
 
-    const script = document.createElement("script");
-    const [library, version] = playerLibrary.split("-");
-    const actualVersion = showCustomVersion ? customVersion : version;
+      const script = document.createElement("script");
+      scriptRef.current = script;
 
-    if (library === "shaka") {
-      script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`;
-    } else {
-      script.src = `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
-    }
-    script.async = true;
-    script.onload = () => {
-      initPlayer();
-      logPlayerInfo(library, actualVersion);
-    };
-    document.body.appendChild(script);
+      const [library, version] = playerLibrary.split("-");
+      const actualVersion = showCustomVersion ? customVersion : version;
 
-    return () => {
-      document.body.removeChild(script);
-    };
+      if (library === "shaka") {
+        script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`;
+      } else {
+        script.src = `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
+      }
+
+      script.async = true;
+      script.onload = () => {
+        initPlayer();
+        logPlayerInfo(library, actualVersion);
+        resolve();
+      };
+      script.onerror = (error) => {
+        addLog(`Failed to load library: ${error}`);
+        reject(error);
+      };
+      document.body.appendChild(script);
+    });
   };
 
   const logPlayerInfo = (library, version) => {
@@ -152,6 +152,11 @@ const PlayerDebugApp = () => {
       `Current player: ${
         library === "shaka" ? "Shaka Player" : "hls.js"
       } / Version: ${version}`
+    );
+    addLog(
+      `Loaded ${
+        library === "shaka" ? "Shaka Player" : "hls.js"
+      } version ${version}`
     );
   };
 
@@ -183,28 +188,20 @@ const PlayerDebugApp = () => {
   };
 
   const loadVideo = async () => {
-    if (showCustomVersion && !customVersion) {
-      addLog("Please enter a custom version before loading the video");
-      return;
-    }
+    try {
+      await loadPlayerLibrary();
 
-    if (playerRef.current) {
-      try {
-        const [library] = playerLibrary.split("-");
-        if (library === "shaka") {
-          await playerRef.current.load(videoUrl);
-        } else {
-          playerRef.current.loadSource(videoUrl);
-        }
-        addLog("Video loaded successfully");
-        setIsPlaying(true);
-        videoRef.current.play();
-      } catch (e) {
-        onError(e);
+      const [library] = playerLibrary.split("-");
+      if (library === "shaka") {
+        await playerRef.current.load(videoUrl);
+      } else {
+        playerRef.current.loadSource(videoUrl);
       }
-    } else {
-      addLog("Player not initialized. Loading library...");
-      loadPlayerLibrary();
+      addLog("Video loaded successfully");
+      setIsPlaying(true);
+      videoRef.current.play();
+    } catch (e) {
+      onError(e);
     }
   };
 
@@ -300,7 +297,7 @@ const PlayerDebugApp = () => {
                 </SelectItem>
                 <SelectItem value="shaka-4.8.4">Shaka Player 4.8.4</SelectItem>
                 <SelectItem value="shaka-custom">
-                  Shaka Player Version Settings
+                  Shaka Version Settings
                 </SelectItem>
                 <SelectItem value="hls-0.12.4">hls.js 0.12.4</SelectItem>
                 <SelectItem value="hls-1.3.0">hls.js 1.3.0</SelectItem>
@@ -331,6 +328,7 @@ const PlayerDebugApp = () => {
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <video
                 ref={videoRef}
+                controls
                 className="w-full h-full"
                 onTimeUpdate={handleVideoTimeUpdate}
               />
