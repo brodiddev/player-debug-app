@@ -115,8 +115,25 @@ const PlayerDebugApp = () => {
   const playerRef = useRef(null);
   const scriptRef = useRef(null);
 
+  const destroyPlayer = () => {
+    if (playerRef.current) {
+      if (playerRef.current instanceof window.shaka.Player) {
+        playerRef.current.destroy();
+      } else if (playerRef.current instanceof Hls) {
+        playerRef.current.destroy();
+      }
+      playerRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.removeAttribute("src");
+    }
+  };
+
   const loadPlayerLibrary = () => {
     return new Promise((resolve, reject) => {
+      destroyPlayer();
+
       if (scriptRef.current) {
         document.body.removeChild(scriptRef.current);
       }
