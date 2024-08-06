@@ -149,9 +149,10 @@ const PlayerDebugApp = () => {
 
   const logPlayerInfo = (library, version) => {
     console.log(
-      `Current player: ${library === "shaka" ? "Shaka Player" : "hls.js"}`
+      `Current player: ${
+        library === "shaka" ? "Shaka Player" : "hls.js"
+      } / Version: ${version}`
     );
-    console.log(`Version: ${version}`);
   };
 
   const initPlayer = () => {
@@ -299,13 +300,13 @@ const PlayerDebugApp = () => {
                 </SelectItem>
                 <SelectItem value="shaka-4.8.4">Shaka Player 4.8.4</SelectItem>
                 <SelectItem value="shaka-custom">
-                  Shaka Player Version settings
+                  Shaka Player Version Settings
                 </SelectItem>
                 <SelectItem value="hls-0.12.4">hls.js 0.12.4</SelectItem>
                 <SelectItem value="hls-1.3.0">hls.js 1.3.0</SelectItem>
                 <SelectItem value="hls-1.5.13">hls.js 1.5.13</SelectItem>
                 <SelectItem value="hls-custom">
-                  hls.js Version settings
+                  hls.js Version Settings
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -364,7 +365,7 @@ const PlayerDebugApp = () => {
 
               <TabsContent value="buffer">
                 <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                  <ResponsiveContainer width="100%" height={300}>
+                  {/* <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={bufferData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="time" />
@@ -377,7 +378,7 @@ const PlayerDebugApp = () => {
                         stroke="#8884d8"
                       />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </TabsContent>
 
