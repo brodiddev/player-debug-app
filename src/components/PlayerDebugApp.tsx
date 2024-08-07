@@ -49,7 +49,25 @@ const PlayerDebugApp: React.FC = () => {
       }`}
     >
       <header className="bg-gray-900 text-white py-3 px-6 shadow-md">
-        {/* Header content */}
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Video className="h-6 w-6 text-blue-400" />
+            <h1 className="text-xl font-medium">Player Debug App</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">Dark Mode</span>
+            <Switch
+              checked={darkMode}
+              onCheckedChange={setDarkMode}
+              className="mr-2"
+            />
+            {darkMode ? (
+              <Moon className="h-5 w-5 text-blue-400" />
+            ) : (
+              <Sun className="h-5 w-5 text-yellow-400" />
+            )}
+          </div>
+        </div>
       </header>
 
       <main className="flex-grow container mx-auto p-6">
@@ -127,7 +145,14 @@ const PlayerDebugApp: React.FC = () => {
       </main>
 
       <footer className="bg-gray-100 dark:bg-gray-800 py-4">
-        {/* Footer content */}
+        <div className="container mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
+          <p>
+            Contact:{" "}
+            <a href="mailto:brodi@sooplive.com" className="hover:underline">
+              brodi@sooplive.com
+            </a>
+          </p>
+        </div>
       </footer>
     </div>
   );
