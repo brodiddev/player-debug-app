@@ -1,5 +1,9 @@
 import { LOW_BUFFER_DURATION, MEDIA_EVENTS_LIST } from "@/constant/player";
-import { getBufferStatus, getTimestamp, getBufferedRanges } from "./utils";
+import {
+  getBufferStatus,
+  getTimestamp,
+  getBufferedRanges,
+} from "../components/util/debuggerUtils";
 
 export enum BufferingCause {
   INITIALIZING = "initializing",
