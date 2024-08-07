@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MEDIA_EVENTS_LIST } from "@/constant/player";
+import { setEventRecord, EventHistory } from "./debugger/videoEvent";
 
 const VideoControls = ({
   playbackRate,
@@ -44,7 +46,7 @@ const VideoControls = ({
   };
 
   return (
-    <div className="p-4 space-y-4" onClick={handleControlsClick}>
+    <div className="p-4 space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">
           Playback Rate: {playbackRate}x
@@ -110,10 +112,52 @@ const PlayerDebugApp = () => {
   const [logs, setLogs] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(false);
+  const [videoEvents, setVideoEvents] = useState<EventHistory[]>([]);
 
-  const videoRef = useRef(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef(null);
   const scriptRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const bindVideoElEvents = () => {
+      Object.entries(MEDIA_EVENTS_LIST).forEach(([key, value]) => {
+        video.addEventListener(key, videoElEventHandler);
+      });
+    };
+
+    const unbindVideoElEvents = () => {
+      Object.entries(MEDIA_EVENTS_LIST).forEach(([key, value]) => {
+        video.removeEventListener(key, videoElEventHandler);
+      });
+    };
+
+    bindVideoElEvents();
+
+    return () => {
+      unbindVideoElEvents();
+    };
+  }, []);
+
+  const videoElEventHandler = (event: Event) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setEventRecord(video, event, addPlayerEvent);
+
+    switch (event.type) {
+      case MEDIA_EVENTS_LIST.loadstart:
+        break;
+      case MEDIA_EVENTS_LIST.loadedmetadata:
+        break;
+    }
+  };
+
+  const addPlayerEvent = (event: EventHistory) => {
+    setVideoEvents((prev) => [...prev, event]);
+  };
 
   const destroyPlayer = () => {
     if (playerRef.current) {
@@ -213,7 +257,7 @@ const PlayerDebugApp = () => {
     }
   };
 
-  const loadVideo = async () => {
+  const loadMedia = async () => {
     try {
       await loadPlayerLibrary();
       const [library] = playerLibrary.split("-");
@@ -342,14 +386,10 @@ const PlayerDebugApp = () => {
                 className="w-[150px]"
               />
             )}
-            <Button onClick={loadVideo}>Load</Button>
+            <Button onClick={loadMedia}>Load</Button>
           </div>
 
-          <div
-            className="relative"
-            onMouseEnter={() => setIsControlsVisible(true)}
-            onMouseLeave={() => setIsControlsVisible(false)}
-          >
+          <div className="relative">
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <video
                 ref={videoRef}
@@ -358,50 +398,37 @@ const PlayerDebugApp = () => {
                 onTimeUpdate={handleVideoTimeUpdate}
               />
             </div>
-            <div
-              className={`absolute top-0 right-0 h-full bg-gray-800 bg-opacity-75 text-white transition-all duration-300 ease-in-out ${
-                isControlsVisible ? "w-64 opacity-100" : "w-0 opacity-0"
-              } overflow-hidden`}
-            >
-              <VideoControls
-                playbackRate={playbackRate}
-                setPlaybackRate={setPlaybackRate}
-                currentTime={currentTime}
-                duration={duration}
-                volume={volume}
-                setVolume={setVolume}
-                isMuted={isMuted}
-                setIsMuted={setIsMuted}
-                videoRef={videoRef}
-                onControlsInteraction={handleControlsInteraction}
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
-            <Tabs defaultValue="buffer">
+            <Tabs defaultValue="playback">
               <TabsList className="mb-4">
+                <TabsTrigger value="playback">Playback</TabsTrigger>
+                <TabsTrigger value="videoEvents">Video Events</TabsTrigger>
                 <TabsTrigger value="buffer">Buffer</TabsTrigger>
                 <TabsTrigger value="network">Network</TabsTrigger>
                 <TabsTrigger value="logs">Logs</TabsTrigger>
               </TabsList>
 
+              <TabsContent value="playback">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                  <VideoControls
+                    playbackRate={playbackRate}
+                    setPlaybackRate={setPlaybackRate}
+                    currentTime={currentTime}
+                    duration={duration}
+                    volume={volume}
+                    setVolume={setVolume}
+                    isMuted={isMuted}
+                    setIsMuted={setIsMuted}
+                    videoRef={videoRef}
+                  />
+                </div>
+              </TabsContent>
+
               <TabsContent value="buffer">
                 <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                  {/* <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={bufferData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="time" />
-                      <YAxis width={50} />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="bufferSize"
-                        stroke="#8884d8"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer> */}
+                  {/* Buffer chart implementation */}
                 </div>
               </TabsContent>
 
@@ -412,6 +439,7 @@ const PlayerDebugApp = () => {
                   <div>Latency: {networkStats.latency} ms</div>
                 </div>
               </TabsContent>
+
               <TabsContent value="logs">
                 <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-64 overflow-y-auto">
                   {logs.map((log, index) => (
@@ -420,6 +448,36 @@ const PlayerDebugApp = () => {
                       {log.message}
                     </div>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="videoEvents">
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-96 overflow-y-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr>
+                        <th className="pr-4">Timestamp</th>
+                        <th className="pr-4">Event</th>
+                        <th className="pr-4">Current Time</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {videoEvents.map((event, index) => (
+                        <tr
+                          key={index}
+                          className="border-t border-gray-200 dark:border-gray-700"
+                        >
+                          <td className="pr-4">{event.time}</td>
+                          <td className="pr-4">{event.type}</td>
+                          <td className="pr-4">
+                            {event.currentTime.toFixed(6)}
+                          </td>
+                          <td>{event.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </TabsContent>
             </Tabs>
