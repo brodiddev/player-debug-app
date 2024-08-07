@@ -1,27 +1,39 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Moon, Sun, Video } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "./ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import VideoControls from "./VideoControls";
 import PlayerLibrarySelector from "./PlayerLibrarySelector";
 import VideoEventTable from "./VideoEventTable";
 import useVideoPlayer from "@/hooks/useVideoPlayer";
 import useVideoEvents from "@/hooks/useLiveMedia";
-import { initLogUtils } from "./util/logUtils";
+import { initLogUtils, clearLogs } from "./util/logUtils";
+import { SAMPLE_URLS } from "@/constant/player";
+
+const DEBUGGER_VERSION = "1.0.0";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [logs, setLogs] = useState([]);
   const [visibleSections, setVisibleSections] = useState({
+    info: true,
     playback: true,
     videoEvents: true,
     logs: true,
   });
+  const [userIp, setUserIp] = useState("");
 
   const {
     videoUrl,
@@ -42,17 +54,39 @@ const PlayerDebugApp: React.FC = () => {
     setCustomVersion,
     showCustomVersion,
     setShowCustomVersion,
+    bufferingCount,
+    resetVideoPlayerState,
   } = useVideoPlayer();
-  const { videoEvents } = useVideoEvents(videoRef);
+
+  const { videoEvents, resetVideoEvents } = useVideoEvents(videoRef);
 
   useEffect(() => {
     initLogUtils(setLogs);
+    fetch("https://api.ipify.org?format=json")
+      .then((response) => response.json())
+      .then((data) => setUserIp(data.ip));
   }, []);
+  const resetAllData = useCallback(() => {
+    resetVideoPlayerState();
+    resetVideoEvents();
+    clearLogs();
+    setLogs([]);
+  }, [resetVideoPlayerState, resetVideoEvents]);
 
-  const toggleSection = (section: "playback" | "videoEvents" | "logs") => {
-    setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  const handleLoadMedia = useCallback(() => {
+    resetAllData();
+    loadMedia();
+  }, [resetAllData, loadMedia]);
+
+  const handleSampleUrlSelect = (url: string) => {
+    setVideoUrl(url);
   };
 
+  const toggleSection = (
+    section: "info" | "playback" | "videoEvents" | "logs"
+  ) => {
+    setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
   return (
     <div
       className={`min-h-screen flex flex-col ${
@@ -84,13 +118,27 @@ const PlayerDebugApp: React.FC = () => {
       <main className="flex-grow container mx-auto p-6">
         <div className="space-y-6">
           <div className="flex space-x-2">
-            <Input
-              type="text"
-              placeholder="Enter video URL"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="flex-grow"
-            />
+            <div className="flex-grow">
+              <Input
+                type="text"
+                placeholder="Enter video URL"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Select onValueChange={handleSampleUrlSelect}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select sample URL" />
+              </SelectTrigger>
+              <SelectContent>
+                {SAMPLE_URLS.map((sample, index) => (
+                  <SelectItem key={index} value={sample.url}>
+                    {sample.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <PlayerLibrarySelector
               playerLibrary={playerLibrary}
               setPlayerLibrary={setPlayerLibrary}
@@ -99,7 +147,7 @@ const PlayerDebugApp: React.FC = () => {
               showCustomVersion={showCustomVersion}
               setShowCustomVersion={setShowCustomVersion}
             />
-            <Button onClick={loadMedia}>Load</Button>
+            <Button onClick={handleLoadMedia}>Load</Button>
           </div>
 
           <div className="relative">
@@ -110,25 +158,59 @@ const PlayerDebugApp: React.FC = () => {
 
           <div className="flex space-x-4 mb-4">
             <Checkbox
+              checked={visibleSections.info}
+              onCheckedChange={() => toggleSection("info")}
+              label="Info"
+            />
+            <Checkbox
               checked={visibleSections.playback}
-              onCheckedChange={(checked) => toggleSection("playback")}
+              onCheckedChange={() => toggleSection("playback")}
               label="Playback"
             />
             <Checkbox
               checked={visibleSections.videoEvents}
-              onCheckedChange={(checked) => toggleSection("videoEvents")}
+              onCheckedChange={() => toggleSection("videoEvents")}
               label="Video Events"
             />
             <Checkbox
               checked={visibleSections.logs}
-              onCheckedChange={(checked) => toggleSection("logs")}
+              onCheckedChange={() => toggleSection("logs")}
               label="Logs"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex space-x-4">
+            {visibleSections.info && (
+              <div className="w-[40%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2">Info</h2>
+                <p>Debugger Version: {DEBUGGER_VERSION}</p>
+                <p>User Agent: {navigator.userAgent}</p>
+                <p>User IP: {userIp}</p>
+                <p>
+                  Buffering Count (Initial/Playback): {bufferingCount.initial}/
+                  {bufferingCount.playback}
+                </p>
+              </div>
+            )}
+
+            {visibleSections.logs && (
+              <div className="w-[60%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2">Logs</h2>
+                <div className="h-48 overflow-y-auto">
+                  {logs.map((log, index) => (
+                    <div key={index} className="mb-1">
+                      <span className="text-sm text-gray-500">{log.time}</span>:{" "}
+                      {log.message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex space-x-4">
             {visibleSections.playback && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="w-[30%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">
                   Playback Controls
                 </h2>
@@ -147,22 +229,10 @@ const PlayerDebugApp: React.FC = () => {
             )}
 
             {visibleSections.videoEvents && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="w-[70%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Video Events</h2>
-                <VideoEventTable events={videoEvents} />
-              </div>
-            )}
-
-            {visibleSections.logs && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">Logs</h2>
                 <div className="h-64 overflow-y-auto">
-                  {logs.map((log, index) => (
-                    <div key={index} className="mb-1">
-                      <span className="text-sm text-gray-500">{log.time}</span>:{" "}
-                      {log.message}
-                    </div>
-                  ))}
+                  <VideoEventTable events={videoEvents} />
                 </div>
               </div>
             )}

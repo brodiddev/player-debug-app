@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, act } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { addLog } from "@/components/util/logUtils";
-
 declare global {
   interface Window {
     shaka: any;
@@ -22,6 +21,45 @@ const useVideoPlayer = () => {
   const [showCustomVersion, setShowCustomVersion] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
+  const [bufferingCount, setBufferingCount] = useState({
+    initial: 0,
+    playback: 0,
+  });
+
+  const resetVideoPlayerState = useCallback(() => {
+    setPlaybackRate(1);
+    setCurrentTime(0);
+    setDuration(0);
+    setVolume(1);
+    setIsMuted(false);
+    setBufferingCount({ initial: 0, playback: 0 });
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      setDuration(video.duration);
+    };
+
+    const handleWaiting = () => {
+      if (currentTime === 0) {
+        setBufferingCount((prev) => ({ ...prev, initial: prev.initial + 1 }));
+      } else {
+        setBufferingCount((prev) => ({ ...prev, playback: prev.playback + 1 }));
+      }
+    };
+
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("waiting", handleWaiting);
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("waiting", handleWaiting);
+    };
+  }, [videoRef, currentTime]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -127,6 +165,8 @@ const useVideoPlayer = () => {
     showCustomVersion,
     setShowCustomVersion,
     handleTimeUpdate,
+    bufferingCount,
+    resetVideoPlayerState,
   };
 };
 

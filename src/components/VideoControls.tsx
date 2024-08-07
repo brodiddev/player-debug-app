@@ -1,5 +1,5 @@
 import React from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, FastForward } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 interface VideoControlsProps {
@@ -27,25 +27,29 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 }) => {
   return (
     <div className="p-4 space-y-4">
-      <div>
+      <div className="w-full">
         <label className="block text-sm font-medium mb-1">
           Playback Rate: {playbackRate}x
         </label>
-        <Slider
-          min={0.5}
-          max={2}
-          step={0.1}
-          value={[playbackRate]}
-          onValueChange={(value) => {
-            setPlaybackRate(value[0]);
-            if (videoRef.current) {
-              videoRef.current.playbackRate = value[0];
-            }
-          }}
-        />
+        <div className="flex items-center space-x-2">
+          <FastForward size={20} />
+          <Slider
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={[playbackRate]}
+            onValueChange={(value) => {
+              setPlaybackRate(value[0]);
+              if (videoRef.current) {
+                videoRef.current.playbackRate = value[0];
+              }
+            }}
+            className="w-full"
+          />
+        </div>
       </div>
 
-      <div>
+      <div className="w-full">
         <label className="block text-sm font-medium mb-1">Volume</label>
         <div className="flex items-center space-x-2">
           <button onClick={() => setIsMuted(!isMuted)}>
@@ -64,6 +68,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                 videoRef.current.muted = value[0] === 0;
               }
             }}
+            className="w-full"
           />
         </div>
       </div>

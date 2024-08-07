@@ -66,3 +66,18 @@ export const SHAKA_EVENTS_LIST = {
   textchanged: "textchanged",
   texttrackvisibility: "texttrackvisibility",
 };
+
+export const SAMPLE_URLS = [
+  {
+    label: "BBB - adaptive qualities",
+    url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+  },
+  {
+    label: "BBB - 480 only",
+    url: "https://test-streams.mux.dev/x36xhzz/url_6/193039199_mp4_h264_aac_hq_7.m3u8",
+  },
+  {
+    label: "HLS fMP4",
+    url: "https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s-fmp4/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8",
+  },
+];

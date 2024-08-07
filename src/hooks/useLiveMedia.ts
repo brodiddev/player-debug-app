@@ -1,9 +1,13 @@
-import { useState, useEffect, RefObject } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MEDIA_EVENTS_LIST } from "@/constant/player";
 import { setEventRecord, EventHistory } from "./useVideoEvent";
 
 const useVideoEvents = (videoRef: RefObject<HTMLVideoElement>) => {
   const [videoEvents, setVideoEvents] = useState<EventHistory[]>([]);
+
+  const resetVideoEvents = useCallback(() => {
+    setVideoEvents([]);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -33,7 +37,7 @@ const useVideoEvents = (videoRef: RefObject<HTMLVideoElement>) => {
     setVideoEvents((prev) => [...prev, event]);
   };
 
-  return { videoEvents };
+  return { videoEvents, resetVideoEvents };
 };
 
 export default useVideoEvents;
