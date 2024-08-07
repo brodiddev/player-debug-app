@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Moon, Sun, Video } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "./ui/checkbox";
 import VideoControls from "./VideoControls";
 import PlayerLibrarySelector from "./PlayerLibrarySelector";
 import VideoEventTable from "./VideoEventTable";
@@ -17,6 +17,12 @@ import { initLogUtils } from "./util/logUtils";
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [visibleSections, setVisibleSections] = useState({
+    playback: true,
+    videoEvents: true,
+    logs: true,
+  });
+
   const {
     videoUrl,
     setVideoUrl,
@@ -39,8 +45,13 @@ const PlayerDebugApp: React.FC = () => {
   } = useVideoPlayer();
   const { videoEvents } = useVideoEvents(videoRef);
 
-  // Initialize log utils
-  initLogUtils(setLogs);
+  useEffect(() => {
+    initLogUtils(setLogs);
+  }, []);
+
+  const toggleSection = (section: "playback" | "videoEvents" | "logs") => {
+    setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   return (
     <div
@@ -97,42 +108,65 @@ const PlayerDebugApp: React.FC = () => {
             </div>
           </div>
 
-          <Tabs defaultValue="playback">
-            <TabsList className="mb-4">
-              <TabsTrigger value="playback">Playback</TabsTrigger>
-              <TabsTrigger value="videoEvents">Video Events</TabsTrigger>
-              <TabsTrigger value="logs">Logs</TabsTrigger>
-            </TabsList>
+          <div className="flex space-x-4 mb-4">
+            <Checkbox
+              checked={visibleSections.playback}
+              onCheckedChange={(checked) => toggleSection("playback")}
+              label="Playback"
+            />
+            <Checkbox
+              checked={visibleSections.videoEvents}
+              onCheckedChange={(checked) => toggleSection("videoEvents")}
+              label="Video Events"
+            />
+            <Checkbox
+              checked={visibleSections.logs}
+              onCheckedChange={(checked) => toggleSection("logs")}
+              label="Logs"
+            />
+          </div>
 
-            <TabsContent value="playback">
-              <VideoControls
-                playbackRate={playbackRate}
-                setPlaybackRate={setPlaybackRate}
-                currentTime={currentTime}
-                duration={duration}
-                volume={volume}
-                setVolume={setVolume}
-                isMuted={isMuted}
-                setIsMuted={setIsMuted}
-                videoRef={videoRef}
-              />
-            </TabsContent>
-
-            <TabsContent value="videoEvents">
-              <VideoEventTable events={videoEvents} />
-            </TabsContent>
-
-            <TabsContent value="logs">
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-64 overflow-y-auto">
-                {logs.map((log, index) => (
-                  <div key={index} className="mb-1">
-                    <span className="text-sm text-gray-500">{log.time}</span>:{" "}
-                    {log.message}
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleSections.playback && (
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2">
+                  Playback Controls
+                </h2>
+                <VideoControls
+                  playbackRate={playbackRate}
+                  setPlaybackRate={setPlaybackRate}
+                  currentTime={currentTime}
+                  duration={duration}
+                  volume={volume}
+                  setVolume={setVolume}
+                  isMuted={isMuted}
+                  setIsMuted={setIsMuted}
+                  videoRef={videoRef}
+                />
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+
+            {visibleSections.videoEvents && (
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2">Video Events</h2>
+                <VideoEventTable events={videoEvents} />
+              </div>
+            )}
+
+            {visibleSections.logs && (
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                <h2 className="text-lg font-semibold mb-2">Logs</h2>
+                <div className="h-64 overflow-y-auto">
+                  {logs.map((log, index) => (
+                    <div key={index} className="mb-1">
+                      <span className="text-sm text-gray-500">{log.time}</span>:{" "}
+                      {log.message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <Alert className="mt-6">
