@@ -25,6 +25,13 @@ const useVideoPlayer = () => {
     initial: 0,
     playback: 0,
   });
+  const [readyState, setReadyState] = useState(0);
+  const [networkState, setNetworkState] = useState(0);
+  const [displayedFrameRate, setDisplayedFrameRate] = useState(0);
+  const [droppedFrames, setDroppedFrames] = useState<number[]>([]);
+  const [totalFrames, setTotalFrames] = useState({ dropped: 0, total: 0 });
+  const [mediaSourceUrl, setMediaSourceUrl] = useState("");
+  const [mediaSourceState, setMediaSourceState] = useState("");
 
   const resetVideoPlayerState = useCallback(() => {
     setPlaybackRate(1);
@@ -36,30 +43,47 @@ const useVideoPlayer = () => {
   }, []);
 
   useEffect(() => {
+    if (!videoRef.current) return;
+
     const video = videoRef.current;
-    if (!video) return;
 
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      setDuration(video.duration);
-    };
+    const updateVideoInfo = () => {
+      setReadyState(video.readyState);
+      setNetworkState(video.networkState);
 
-    const handleWaiting = () => {
-      if (currentTime === 0) {
-        setBufferingCount((prev) => ({ ...prev, initial: prev.initial + 1 }));
-      } else {
-        setBufferingCount((prev) => ({ ...prev, playback: prev.playback + 1 }));
+      // Frame rate and dropped frames
+      if ("getVideoPlaybackQuality" in video) {
+        const quality = video.getVideoPlaybackQuality();
+        setDisplayedFrameRate(quality.totalVideoFrames / video.currentTime);
+        setTotalFrames({
+          dropped: quality.droppedVideoFrames,
+          total: quality.totalVideoFrames,
+        });
+
+        setDroppedFrames((prev) => {
+          const newDropped = [
+            ...prev,
+            quality.droppedVideoFrames -
+              (prev.length > 0 ? prev[prev.length - 1] : 0),
+          ];
+          return newDropped.slice(-20); // 마지막 20개
+        });
+      }
+
+      // MSE
+      if (video.src.startsWith("blob:")) {
+        setMediaSourceUrl(video.src);
+        const mediaSource = video.srcObject as MediaSource;
+        if (mediaSource) {
+          setMediaSourceState(mediaSource.readyState);
+        }
       }
     };
 
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("waiting", handleWaiting);
+    const intervalId = setInterval(updateVideoInfo, 1000); // 1초마다 업데이트
 
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("waiting", handleWaiting);
-    };
-  }, [videoRef, currentTime]);
+    return () => clearInterval(intervalId);
+  }, [videoRef]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -89,11 +113,13 @@ const useVideoPlayer = () => {
         );
         resolve();
       };
+
       script.onerror = () => {
         const errorMessage = `Failed to load ${library} player library version ${actualVersion}`;
         addLog(errorMessage);
         reject(new Error(errorMessage));
       };
+
       document.body.appendChild(script);
     });
   }, [playerLibrary, showCustomVersion, customVersion]);
@@ -167,6 +193,13 @@ const useVideoPlayer = () => {
     handleTimeUpdate,
     bufferingCount,
     resetVideoPlayerState,
+    readyState,
+    networkState,
+    displayedFrameRate,
+    droppedFrames,
+    totalFrames,
+    mediaSourceUrl,
+    mediaSourceState,
   };
 };
 

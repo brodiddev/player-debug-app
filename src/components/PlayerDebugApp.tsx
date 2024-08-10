@@ -66,6 +66,7 @@ const PlayerDebugApp: React.FC = () => {
       .then((response) => response.json())
       .then((data) => setUserIp(data.ip));
   }, []);
+
   const resetAllData = useCallback(() => {
     resetVideoPlayerState();
     resetVideoEvents();
