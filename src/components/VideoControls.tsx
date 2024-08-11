@@ -12,13 +12,6 @@ interface VideoControlsProps {
   isMuted: boolean;
   setIsMuted: (muted: boolean) => void;
   videoRef: React.RefObject<HTMLVideoElement>;
-  readyState: number;
-  networkState: number;
-  displayedFrameRate: number;
-  droppedFrames: number[];
-  totalFrames: { dropped: number; total: number };
-  mediaSourceUrl: string;
-  mediaSourceState: string;
 }
 
 const VideoControls: React.FC<VideoControlsProps> = ({
@@ -31,35 +24,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   isMuted,
   setIsMuted,
   videoRef,
-  readyState,
-  networkState,
-  displayedFrameRate,
-  droppedFrames,
-  totalFrames,
-  mediaSourceUrl,
-  mediaSourceState,
 }) => {
-  const getReadyStateText = (state: number) => {
-    const states = [
-      "HAVE_NOTHING",
-      "HAVE_METADATA",
-      "HAVE_CURRENT_DATA",
-      "HAVE_FUTURE_DATA",
-      "HAVE_ENOUGH_DATA",
-    ];
-    return `${state} (${states[state]})`;
-  };
-
-  const getNetworkStateText = (state: number) => {
-    const states = [
-      "NETWORK_EMPTY",
-      "NETWORK_IDLE",
-      "NETWORK_LOADING",
-      "NETWORK_NO_SOURCE",
-    ];
-    return `${state} (${states[state]})`;
-  };
-
   return (
     <div className="p-4 space-y-4">
       <div className="w-full">
@@ -111,20 +76,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
       <div>
         <div>Current Time: {currentTime.toFixed(2)}s</div>
         <div>Duration: {duration.toFixed(2)}s</div>
-      </div>
-
-      <div className="space-y-2">
-        <p>ReadyState: {getReadyStateText(readyState)}</p>
-        <p>NetworkState: {getNetworkStateText(networkState)}</p>
-        <p>DisplayedFrameRate: {displayedFrameRate.toFixed(2)}</p>
-        <p>DroppedFramesPerSec: [{droppedFrames.join(",")}]</p>
-        <p>
-          Total Frames (dropped/total): {totalFrames.dropped} /{" "}
-          {totalFrames.total}
-        </p>
-        <p>MediaSource Extension</p>
-        <p>{mediaSourceUrl}</p>
-        <p>readyState: {mediaSourceState}</p>
       </div>
     </div>
   );
