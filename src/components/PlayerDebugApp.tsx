@@ -33,7 +33,6 @@ const PlayerDebugApp: React.FC = () => {
     videoEvents: true,
     logs: true,
   });
-  const [userIp, setUserIp] = useState("");
 
   const {
     videoUrl,
@@ -62,9 +61,6 @@ const PlayerDebugApp: React.FC = () => {
 
   useEffect(() => {
     initLogUtils(setLogs);
-    fetch("https://api.ipify.org?format=json")
-      .then((response) => response.json())
-      .then((data) => setUserIp(data.ip));
   }, []);
   const resetAllData = useCallback(() => {
     resetVideoPlayerState();
@@ -185,7 +181,6 @@ const PlayerDebugApp: React.FC = () => {
                 <h2 className="text-lg font-semibold mb-2">Info</h2>
                 <p>Debugger Version: {DEBUGGER_VERSION}</p>
                 <p>User Agent: {navigator.userAgent}</p>
-                <p>User IP: {userIp}</p>
                 <p>
                   Buffering Count (Initial/Playback): {bufferingCount.initial}/
                   {bufferingCount.playback}
