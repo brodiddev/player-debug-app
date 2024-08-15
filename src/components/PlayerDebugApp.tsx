@@ -21,6 +21,11 @@ import useVideoPlayer from "@/hooks/useVideoPlayer";
 import useVideoEvents from "@/hooks/useLiveMedia";
 import { initLogUtils, clearLogs } from "./util/logUtils";
 import { SAMPLE_URLS } from "@/constant/player";
+import ConfigEditor from "./ConfigEditor";
+import {
+  defaultHlsConfig,
+  defaultShakaConfig,
+} from "@/app/players/defaultConfig";
 
 const DEBUGGER_VERSION = "1.0.0";
 
@@ -33,6 +38,8 @@ const PlayerDebugApp: React.FC = () => {
     videoEvents: true,
     logs: true,
   });
+  // config
+  const [currentConfig, setCurrentConfig] = useState<any>(null);
 
   const {
     videoUrl,
@@ -62,6 +69,13 @@ const PlayerDebugApp: React.FC = () => {
   useEffect(() => {
     initLogUtils(setLogs);
   }, []);
+
+  useEffect(() => {
+    setCurrentConfig(
+      playerLibrary.startsWith("shaka") ? defaultShakaConfig : defaultHlsConfig
+    );
+  }, [playerLibrary]);
+
   const resetAllData = useCallback(() => {
     resetVideoPlayerState();
     resetVideoEvents();
@@ -78,11 +92,10 @@ const PlayerDebugApp: React.FC = () => {
     setVideoUrl(url);
   };
 
-  const toggleSection = (
-    section: "info" | "playback" | "videoEvents" | "logs"
-  ) => {
+  const toggleSection = (section: keyof typeof visibleSections) => {
     setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
+
   return (
     <div
       className={`min-h-screen flex flex-col ${
@@ -111,18 +124,16 @@ const PlayerDebugApp: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto p-6">
+      <main className="container mx-auto p-6">
         <div className="space-y-6">
           <div className="flex space-x-2">
-            <div className="flex-grow">
-              <Input
-                type="text"
-                placeholder="Enter video URL"
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                className="w-full"
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="Enter video URL"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="flex-grow"
+            />
             <Select onValueChange={handleSampleUrlSelect}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select sample URL" />
@@ -146,6 +157,11 @@ const PlayerDebugApp: React.FC = () => {
             <Button onClick={handleLoadMedia}>Load</Button>
           </div>
 
+          <ConfigEditor
+            initialConfig={currentConfig}
+            onChange={setCurrentConfig}
+          />
+
           <div className="relative">
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
               <video ref={videoRef} controls className="w-full h-full" />
@@ -153,31 +169,24 @@ const PlayerDebugApp: React.FC = () => {
           </div>
 
           <div className="flex space-x-4 mb-4">
-            <Checkbox
-              checked={visibleSections.info}
-              onCheckedChange={() => toggleSection("info")}
-              label="Info"
-            />
-            <Checkbox
-              checked={visibleSections.playback}
-              onCheckedChange={() => toggleSection("playback")}
-              label="Playback"
-            />
-            <Checkbox
-              checked={visibleSections.videoEvents}
-              onCheckedChange={() => toggleSection("videoEvents")}
-              label="Video Events"
-            />
-            <Checkbox
-              checked={visibleSections.logs}
-              onCheckedChange={() => toggleSection("logs")}
-              label="Logs"
-            />
+            {Object.entries(visibleSections).map(([key, value]) => (
+              <label key={key} className="flex items-center">
+                <Checkbox
+                  checked={value}
+                  onCheckedChange={() =>
+                    toggleSection(key as keyof typeof visibleSections)
+                  }
+                />
+                <span className="ml-2">
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </span>
+              </label>
+            ))}
           </div>
 
-          <div className="flex space-x-4">
+          <div className="grid grid-cols-2 gap-4">
             {visibleSections.info && (
-              <div className="w-[40%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Info</h2>
                 <p>Debugger Version: {DEBUGGER_VERSION}</p>
                 <p>User Agent: {navigator.userAgent}</p>
@@ -189,10 +198,10 @@ const PlayerDebugApp: React.FC = () => {
             )}
 
             {visibleSections.logs && (
-              <div className="w-[60%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Logs</h2>
                 <div className="h-48 overflow-y-auto">
-                  {logs.map((log, index) => (
+                  {logs.map((log: any, index) => (
                     <div key={index} className="mb-1">
                       <span className="text-sm text-gray-500">{log.time}</span>:{" "}
                       {log.message}
@@ -201,11 +210,9 @@ const PlayerDebugApp: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="flex space-x-4">
             {visibleSections.playback && (
-              <div className="w-[30%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">
                   Playback Controls
                 </h2>
@@ -224,7 +231,7 @@ const PlayerDebugApp: React.FC = () => {
             )}
 
             {visibleSections.videoEvents && (
-              <div className="w-[70%] bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Video Events</h2>
                 <div className="h-64 overflow-y-auto">
                   <VideoEventTable events={videoEvents} />
