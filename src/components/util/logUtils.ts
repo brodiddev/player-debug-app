@@ -1,5 +1,6 @@
 import { getTimestamp } from "./debuggerUtils";
 let setLogsFunction: (logs: any[]) => void;
+let logs: any[] = [];
 
 export const initLogUtils = (setLogs: (logs: any[]) => void) => {
   setLogsFunction = setLogs;
@@ -7,10 +8,9 @@ export const initLogUtils = (setLogs: (logs: any[]) => void) => {
 
 export const addLog = (message: string) => {
   if (setLogsFunction) {
-    setLogsFunction((prevLogs) => [
-      ...prevLogs,
-      { time: getTimestamp(), message },
-    ]);
+    const newLog = { time: getTimestamp(), message };
+    logs.push(newLog);
+    setLogsFunction([...logs]);
   }
 };
 
