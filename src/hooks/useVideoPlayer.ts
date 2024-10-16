@@ -100,64 +100,80 @@ const useVideoPlayer = () => {
   }, [playerLibrary, showCustomVersion, customVersion]);
 
   // 플레이어가 완전히 초기화되고 비디오를 로드하도록 보장
-  const initializePlayer = useCallback(async () => {
-    if (!videoRef.current) return;
+  const initializePlayer = useCallback(
+    async (config: any) => {
+      if (!videoRef.current) return;
 
-    // 기존 플레이어 인스턴스가 있는 경우 destroy
-    if (playerRef.current) {
-      if (playerRef.current.destroy) {
-        await playerRef.current.destroy();
-      }
-      playerRef.current = null;
-    }
-
-    const [library] = playerLibrary.split("-");
-    if (library === "shaka") {
-      if (window.shaka) {
-        playerRef.current = new window.shaka.Player();
-        await playerRef.current.attach(videoRef.current);
-        addLog("Shaka player initialized and attached successfully");
-      } else {
-        throw new Error("Shaka player not loaded");
-      }
-    } else if (library === "hls") {
-      if (window.Hls) {
-        playerRef.current = new window.Hls();
-        playerRef.current.attachMedia(videoRef.current);
-        addLog("HLS.js player initialized successfully");
-      } else {
-        throw new Error("HLS.js not loaded");
-      }
-    }
-    (window as any).player = playerRef.current;
-  }, [playerLibrary]);
-
-  const loadMedia = useCallback(async () => {
-    try {
-      await loadPlayerLibrary();
-      await initializePlayer();
-
-      if (!videoRef.current || !playerRef.current) {
-        throw new Error("Video element or player not initialized");
+      // 기존 플레이어 인스턴스가 있는 경우 destroy
+      if (playerRef.current) {
+        if (playerRef.current.destroy) {
+          await playerRef.current.destroy();
+        }
+        playerRef.current = null;
       }
 
       const [library] = playerLibrary.split("-");
       if (library === "shaka") {
-        await playerRef.current.load(videoUrl);
-        addLog(`Shaka player: Loaded video source ${videoUrl}`);
+        if (window.shaka) {
+          playerRef.current = new window.shaka.Player();
+          await playerRef.current.attach(videoRef.current);
+          playerRef.current.configure(config); // Apply the configuration
+          console.log("Shaka player instance:", playerRef.current);
+          console.log(
+            "Current Shaka config:",
+            playerRef.current.getConfiguration()
+          );
+          addLog("Shaka player initialized and attached successfully");
+        } else {
+          throw new Error("Shaka player not loaded");
+        }
       } else if (library === "hls") {
-        playerRef.current.loadSource(videoUrl);
-        addLog(`HLS.js player: Loaded video source ${videoUrl}`);
+        if (window.Hls) {
+          playerRef.current = new window.Hls(config); // Pass config to HLS.js
+          playerRef.current.attachMedia(videoRef.current);
+          console.log("HLS.js player instance:", playerRef.current);
+          console.log("Current HLS.js config:", playerRef.current.config);
+          addLog("HLS.js player initialized successfully");
+        } else {
+          throw new Error("HLS.js not loaded");
+        }
       }
+      (window as any).player = playerRef.current;
+    },
+    [playerLibrary]
+  );
 
-      addLog("Video loaded successfully");
-      videoRef.current.play();
-    } catch (e: unknown) {
-      addLog(
-        `Error: ${e instanceof Error ? e.message : "An unknown error occurred"}`
-      );
-    }
-  }, [videoUrl, playerLibrary, loadPlayerLibrary, initializePlayer]);
+  const loadMedia = useCallback(
+    async (config: any) => {
+      try {
+        await loadPlayerLibrary();
+        await initializePlayer(config);
+
+        if (!videoRef.current || !playerRef.current) {
+          throw new Error("Video element or player not initialized");
+        }
+
+        const [library] = playerLibrary.split("-");
+        if (library === "shaka") {
+          await playerRef.current.load(videoUrl);
+          addLog(`Shaka player: Loaded video source ${videoUrl}`);
+        } else if (library === "hls") {
+          playerRef.current.loadSource(videoUrl);
+          addLog(`HLS.js player: Loaded video source ${videoUrl}`);
+        }
+
+        addLog("Video loaded successfully");
+        videoRef.current.play();
+      } catch (e: unknown) {
+        addLog(
+          `Error: ${
+            e instanceof Error ? e.message : "An unknown error occurred"
+          }`
+        );
+      }
+    },
+    [videoUrl, playerLibrary, loadPlayerLibrary, initializePlayer]
+  );
 
   return {
     videoUrl,

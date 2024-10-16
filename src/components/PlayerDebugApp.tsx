@@ -29,9 +29,14 @@ import {
 
 const DEBUGGER_VERSION = "1.0.0";
 
+type Log = {
+  time: string;
+  message: string;
+};
+
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [visibleSections, setVisibleSections] = useState({
     info: true,
     playback: true,
@@ -85,8 +90,8 @@ const PlayerDebugApp: React.FC = () => {
 
   const handleLoadMedia = useCallback(() => {
     resetAllData();
-    loadMedia();
-  }, [resetAllData, loadMedia]);
+    loadMedia(currentConfig);
+  }, [resetAllData, loadMedia, currentConfig]);
 
   const handleSampleUrlSelect = (url: string) => {
     setVideoUrl(url);
