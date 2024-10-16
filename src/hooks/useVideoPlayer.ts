@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { addLog } from "@/components/util/logUtils";
+
 declare global {
   interface Window {
     shaka: any;
@@ -98,14 +99,24 @@ const useVideoPlayer = () => {
     });
   }, [playerLibrary, showCustomVersion, customVersion]);
 
-  const initializePlayer = useCallback(() => {
+  // 플레이어가 완전히 초기화되고 비디오를 로드하도록 보장
+  const initializePlayer = useCallback(async () => {
     if (!videoRef.current) return;
+
+    // 기존 플레이어 인스턴스가 있는 경우 destroy
+    if (playerRef.current) {
+      if (playerRef.current.destroy) {
+        await playerRef.current.destroy();
+      }
+      playerRef.current = null;
+    }
 
     const [library] = playerLibrary.split("-");
     if (library === "shaka") {
       if (window.shaka) {
-        playerRef.current = new window.shaka.Player(videoRef.current);
-        addLog("Shaka player initialized successfully");
+        playerRef.current = new window.shaka.Player();
+        await playerRef.current.attach(videoRef.current);
+        addLog("Shaka player initialized and attached successfully");
       } else {
         throw new Error("Shaka player not loaded");
       }
@@ -118,12 +129,13 @@ const useVideoPlayer = () => {
         throw new Error("HLS.js not loaded");
       }
     }
+    (window as any).player = playerRef.current;
   }, [playerLibrary]);
 
   const loadMedia = useCallback(async () => {
     try {
       await loadPlayerLibrary();
-      initializePlayer();
+      await initializePlayer();
 
       if (!videoRef.current || !playerRef.current) {
         throw new Error("Video element or player not initialized");
@@ -140,8 +152,10 @@ const useVideoPlayer = () => {
 
       addLog("Video loaded successfully");
       videoRef.current.play();
-    } catch (e) {
-      addLog(`Error: ${e.message || "An unknown error occurred"}`);
+    } catch (e: unknown) {
+      addLog(
+        `Error: ${e instanceof Error ? e.message : "An unknown error occurred"}`
+      );
     }
   }, [videoUrl, playerLibrary, loadPlayerLibrary, initializePlayer]);
 
