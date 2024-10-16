@@ -165,6 +165,7 @@ const PlayerDebugApp: React.FC = () => {
           <ConfigEditor
             initialConfig={currentConfig}
             onChange={setCurrentConfig}
+            darkMode={darkMode}
           />
 
           <div className="relative">
