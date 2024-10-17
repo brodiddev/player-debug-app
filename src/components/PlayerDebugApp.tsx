@@ -1,3 +1,8 @@
+/**
+ * what is use client?
+ * @see https://nextjs.org/learn/react-foundations/server-and-client-components
+ * @see https://nextjs.org/docs/app/building-your-application/rendering
+ */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -27,12 +32,12 @@ import {
   defaultShakaConfig,
 } from "@/app/players/defaultConfig";
 
-const DEBUGGER_VERSION = "1.0.0";
-
 type Log = {
   time: string;
   message: string;
 };
+
+const DEBUGGER_VERSION = "1.0.0";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -43,7 +48,6 @@ const PlayerDebugApp: React.FC = () => {
     videoEvents: true,
     logs: true,
   });
-  // config
   const [currentConfig, setCurrentConfig] = useState<any>(null);
 
   const {
@@ -73,9 +77,6 @@ const PlayerDebugApp: React.FC = () => {
 
   useEffect(() => {
     initLogUtils(setLogs);
-  }, []);
-
-  useEffect(() => {
     setCurrentConfig(
       playerLibrary.startsWith("shaka") ? defaultShakaConfig : defaultHlsConfig
     );
@@ -92,10 +93,6 @@ const PlayerDebugApp: React.FC = () => {
     resetAllData();
     loadMedia(currentConfig);
   }, [resetAllData, loadMedia, currentConfig]);
-
-  const handleSampleUrlSelect = (url: string) => {
-    setVideoUrl(url);
-  };
 
   const toggleSection = (section: keyof typeof visibleSections) => {
     setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -139,7 +136,7 @@ const PlayerDebugApp: React.FC = () => {
               onChange={(e) => setVideoUrl(e.target.value)}
               className="flex-grow"
             />
-            <Select onValueChange={handleSampleUrlSelect}>
+            <Select onValueChange={setVideoUrl}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select sample URL" />
               </SelectTrigger>
@@ -207,7 +204,7 @@ const PlayerDebugApp: React.FC = () => {
               <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Logs</h2>
                 <div className="h-48 overflow-y-auto">
-                  {logs.map((log: any, index) => (
+                  {logs.map((log, index) => (
                     <div key={index} className="mb-1">
                       <span className="text-sm text-gray-500">{log.time}</span>:{" "}
                       {log.message}
@@ -260,8 +257,8 @@ const PlayerDebugApp: React.FC = () => {
         <div className="container mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
           <p>
             Contact:{" "}
-            <a href="mailto:brodi@sooplive.com" className="hover:underline">
-              brodi@sooplive.com
+            <a href="mailto:devuxr@naver.com" className="hover:underline">
+              devuxr@naver.com
             </a>
           </p>
         </div>

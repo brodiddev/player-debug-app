@@ -11,6 +11,7 @@ declare global {
 }
 
 const useVideoPlayer = () => {
+  // State management
   const [videoUrl, setVideoUrl] = useState("");
   const [playbackRate, setPlaybackRate] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
@@ -20,13 +21,15 @@ const useVideoPlayer = () => {
   const [playerLibrary, setPlayerLibrary] = useState("shaka-4.10.9");
   const [customVersion, setCustomVersion] = useState("");
   const [showCustomVersion, setShowCustomVersion] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<any>(null);
   const [bufferingCount, setBufferingCount] = useState({
     initial: 0,
     playback: 0,
   });
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<any>(null);
+
+  // Resets player state
   const resetVideoPlayerState = useCallback(() => {
     setPlaybackRate(1);
     setCurrentTime(0);
@@ -36,6 +39,7 @@ const useVideoPlayer = () => {
     setBufferingCount({ initial: 0, playback: 0 });
   }, []);
 
+  // 이벤트 리스너 등록
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -46,11 +50,11 @@ const useVideoPlayer = () => {
     };
 
     const handleWaiting = () => {
-      if (currentTime === 0) {
-        setBufferingCount((prev) => ({ ...prev, initial: prev.initial + 1 }));
-      } else {
-        setBufferingCount((prev) => ({ ...prev, playback: prev.playback + 1 }));
-      }
+      setBufferingCount((prev) => ({
+        ...prev,
+        [currentTime === 0 ? "initial" : "playback"]:
+          prev[currentTime === 0 ? "initial" : "playback"] + 1,
+      }));
     };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
@@ -60,29 +64,19 @@ const useVideoPlayer = () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("waiting", handleWaiting);
     };
-  }, [videoRef, currentTime]);
+  }, [currentTime]);
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-      setDuration(videoRef.current.duration);
-    }
-  };
-
+  // 라이브러리 로드 콜백
   const loadPlayerLibrary = useCallback(() => {
     return new Promise<void>((resolve, reject) => {
       const script = document.createElement("script");
       const [library, version] = playerLibrary.split("-");
       const actualVersion = showCustomVersion ? customVersion : version;
 
-      if (library === "shaka") {
-        script.src = `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`;
-      } else if (library === "hls") {
-        script.src = `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
-      } else {
-        reject(new Error("Unsupported library"));
-        return;
-      }
+      script.src =
+        library === "shaka"
+          ? `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`
+          : `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
 
       script.onload = () => {
         addLog(
@@ -90,68 +84,59 @@ const useVideoPlayer = () => {
         );
         resolve();
       };
+
       script.onerror = () => {
         const errorMessage = `Failed to load ${library} player library version ${actualVersion}`;
         addLog(errorMessage);
         reject(new Error(errorMessage));
       };
+
       document.body.appendChild(script);
     });
   }, [playerLibrary, showCustomVersion, customVersion]);
 
-  // 플레이어가 완전히 초기화되고 비디오를 로드하도록 보장
+  // Initializes the player
   const initializePlayer = useCallback(
     async (config: any) => {
-      if (!videoRef.current) return;
+      const video = videoRef.current;
+      if (!video) return;
 
-      // 기존 플레이어 인스턴스가 있는 경우 destroy
-      if (playerRef.current) {
-        if (playerRef.current.destroy) {
-          await playerRef.current.destroy();
-        }
+      // Destroy existing player
+      if (playerRef.current?.destroy) {
+        await playerRef.current.destroy();
         playerRef.current = null;
       }
 
       const [library] = playerLibrary.split("-");
-      if (library === "shaka") {
-        if (window.shaka) {
-          playerRef.current = new window.shaka.Player();
-          await playerRef.current.attach(videoRef.current);
-          playerRef.current.configure(config); // Apply the configuration
-          console.log("Shaka player instance:", playerRef.current);
-          console.log(
-            "Current Shaka config:",
-            playerRef.current.getConfiguration()
-          );
-          addLog("Shaka player initialized and attached successfully");
-        } else {
-          throw new Error("Shaka player not loaded");
-        }
-      } else if (library === "hls") {
-        if (window.Hls) {
-          playerRef.current = new window.Hls(config); // Pass config to HLS.js
-          playerRef.current.attachMedia(videoRef.current);
-          console.log("HLS.js player instance:", playerRef.current);
-          console.log("Current HLS.js config:", playerRef.current.config);
-          addLog("HLS.js player initialized successfully");
-        } else {
-          throw new Error("HLS.js not loaded");
-        }
+      if (library === "shaka" && window.shaka) {
+        playerRef.current = new window.shaka.Player();
+        await playerRef.current.attach(video);
+        playerRef.current.configure(config);
+        addLog("Shaka player initialized and attached successfully");
+      } else if (library === "hls" && window.Hls) {
+        playerRef.current = new window.Hls(config);
+        playerRef.current.attachMedia(video);
+        addLog("HLS.js player initialized successfully");
+      } else {
+        throw new Error(`${library} player not loaded`);
       }
+
       (window as any).player = playerRef.current;
     },
     [playerLibrary]
   );
 
+  // 미디어 재생
   const loadMedia = useCallback(
     async (config: any) => {
+      if (!videoUrl.trim()) {
+        alert("Please enter a valid URL!");
+        return;
+      }
+
       try {
         await loadPlayerLibrary();
         await initializePlayer(config);
-
-        if (!videoRef.current || !playerRef.current) {
-          throw new Error("Video element or player not initialized");
-        }
 
         const [library] = playerLibrary.split("-");
         if (library === "shaka") {
@@ -162,8 +147,8 @@ const useVideoPlayer = () => {
           addLog(`HLS.js player: Loaded video source ${videoUrl}`);
         }
 
+        videoRef.current?.play();
         addLog("Video loaded successfully");
-        videoRef.current.play();
       } catch (e: unknown) {
         addLog(
           `Error: ${
@@ -194,7 +179,6 @@ const useVideoPlayer = () => {
     setCustomVersion,
     showCustomVersion,
     setShowCustomVersion,
-    handleTimeUpdate,
     bufferingCount,
     resetVideoPlayerState,
   };
