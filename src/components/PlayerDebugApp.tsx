@@ -26,6 +26,13 @@ import {
   defaultHlsJsConfig,
   defaultShakaConfig,
 } from "@/app/players/defaultConfig";
+import {
+  loadConfigFromStorage,
+  saveConfigToStorage,
+  removeConfigFromStorage,
+  loadConfigPersistence,
+  saveConfigPersistence,
+} from "./configService";
 
 type Log = {
   time: string;
@@ -82,60 +89,33 @@ const PlayerDebugApp: React.FC = () => {
     // 비디오 이벤트 로깅
     initLogUtils(setLogs);
 
-    // 현재 선택된 플레이어에 따라 configEditor 제공
-    const storageKey = playerLibrary.startsWith("shaka")
-      ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
-      : STORAGE_KEYS.HLSJS_PLAYER_CONFIG;
-
-    const persistedConfig = localStorage.getItem(storageKey);
-    const persistedPersistence = JSON.parse(
-      localStorage.getItem(STORAGE_KEYS.CONFIG_PERSISTENCE) || "false"
-    );
+    const persistedConfig = loadConfigFromStorage(playerLibrary);
+    const persistedPersistence = loadConfigPersistence();
 
     setConfigPersistenceEnabled(persistedPersistence);
-
-    if (persistedConfig) {
-      setCurrentConfig(JSON.parse(persistedConfig));
-    } else {
-      setCurrentConfig(
-        playerLibrary.startsWith("shaka")
+    setCurrentConfig(
+      persistedConfig ||
+        (playerLibrary.startsWith("shaka")
           ? defaultShakaConfig
-          : defaultHlsJsConfig
-      );
-    }
+          : defaultHlsJsConfig)
+    );
   }, [playerLibrary]);
-
-  // 현재 플레이어 종류에 따라 configEditor의 config를 로컬 스토리지에 저장
-  const persistConfig = (config: any) => {
-    const storageKey = playerLibrary.startsWith("shaka")
-      ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
-      : STORAGE_KEYS.HLSJS_PLAYER_CONFIG;
-
-    if (configPersistenceEnabled) {
-      localStorage.setItem(storageKey, JSON.stringify(config));
-    }
-  };
 
   const handleConfigChange = (newConfig: any) => {
     setCurrentConfig(newConfig);
-    persistConfig(newConfig);
+    if (configPersistenceEnabled) {
+      saveConfigToStorage(playerLibrary, newConfig);
+    }
   };
 
   const handlePersistenceChange = (checked: boolean) => {
     setConfigPersistenceEnabled(checked);
-    localStorage.setItem(
-      STORAGE_KEYS.CONFIG_PERSISTENCE,
-      JSON.stringify(checked)
-    );
+    saveConfigPersistence(checked);
 
     if (checked) {
-      persistConfig(currentConfig);
+      saveConfigToStorage(playerLibrary, currentConfig);
     } else {
-      localStorage.removeItem(
-        playerLibrary.startsWith("shaka")
-          ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
-          : STORAGE_KEYS.HLSJS_PLAYER_CONFIG
-      );
+      removeConfigFromStorage(playerLibrary);
     }
   };
 
@@ -147,7 +127,6 @@ const PlayerDebugApp: React.FC = () => {
   }, [resetVideoPlayerState, resetVideoEvents]);
 
   const handleLoadMedia = useCallback(() => {
-    // loadMedia 전, customVersion 공백 유무 체크
     if (
       (playerLibrary === "shaka-custom" || playerLibrary === "hls-custom") &&
       !customVersion
@@ -231,7 +210,6 @@ const PlayerDebugApp: React.FC = () => {
               onChange={handleConfigChange}
               darkMode={darkMode}
               configPersistenceEnabled={configPersistenceEnabled}
-              saveConfig={persistConfig}
             />
             <div className="flex items-center mt-2">
               <Checkbox

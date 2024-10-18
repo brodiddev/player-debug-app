@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
@@ -9,17 +9,14 @@ interface ConfigEditorProps {
   onChange: (config: any) => void;
   darkMode: boolean;
   configPersistenceEnabled: boolean;
-  saveConfig: (config: any) => void;
 }
 
 const ConfigEditor: React.FC<ConfigEditorProps> = ({
   initialConfig,
   onChange,
   darkMode,
-  configPersistenceEnabled,
-  saveConfig,
 }) => {
-  const [config, setConfig] = React.useState<string>(
+  const [config, setConfig] = useState<string>(
     JSON.stringify(initialConfig, null, 2)
   );
 
@@ -27,30 +24,11 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({
     setConfig(JSON.stringify(initialConfig, null, 2));
   }, [initialConfig]);
 
-  useEffect(() => {
-    if (configPersistenceEnabled) {
-      attemptToSaveConfig();
-    }
-  }, [configPersistenceEnabled, config]);
-
-  const attemptToSaveConfig = () => {
-    try {
-      const parsedConfig = JSON.parse(config);
-      saveConfig(parsedConfig);
-    } catch (error) {
-      console.error("Invalid JSON format");
-    }
-  };
-
   const handleChange = (value: string) => {
     setConfig(value);
     try {
       const parsedConfig = JSON.parse(value);
       onChange(parsedConfig);
-
-      if (configPersistenceEnabled) {
-        saveConfig(parsedConfig);
-      }
     } catch (error) {
       console.error("Invalid JSON format");
     }
