@@ -88,6 +88,7 @@ const useVideoPlayer = () => {
       script.onerror = () => {
         const errorMessage = `Failed to load ${library} player library version ${actualVersion}`;
         addLog(errorMessage);
+        alert(errorMessage);
         reject(new Error(errorMessage));
       };
 

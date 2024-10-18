@@ -147,9 +147,18 @@ const PlayerDebugApp: React.FC = () => {
   }, [resetVideoPlayerState, resetVideoEvents]);
 
   const handleLoadMedia = useCallback(() => {
+    // loadMedia 전, customVersion 공백 유무 체크
+    if (
+      (playerLibrary === "shaka-custom" || playerLibrary === "hls-custom") &&
+      !customVersion
+    ) {
+      alert("Please enter a custom version for the selected player library.");
+      return;
+    }
+
     resetAllData();
     loadMedia(currentConfig);
-  }, [resetAllData, loadMedia, currentConfig]);
+  }, [resetAllData, loadMedia, currentConfig, playerLibrary, customVersion]);
 
   const toggleSection = (section: keyof typeof visibleSections) => {
     setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
