@@ -17,7 +17,7 @@ interface PlayerLibrarySelectorProps {
   setShowCustomVersion: (show: boolean) => void;
 }
 
-const PlayerLibrarySelector: React.FC<PlayerLibrarySelectorProps> = ({
+export const PlayerLibrarySelector: React.FC<PlayerLibrarySelectorProps> = ({
   playerLibrary,
   setPlayerLibrary,
   customVersion,
@@ -71,5 +71,3 @@ const PlayerLibrarySelector: React.FC<PlayerLibrarySelectorProps> = ({
     </>
   );
 };
-
-export default PlayerLibrarySelector;

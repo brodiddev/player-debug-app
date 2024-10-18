@@ -11,7 +11,7 @@ interface ConfigEditorProps {
   configPersistenceEnabled: boolean;
 }
 
-const ConfigEditor: React.FC<ConfigEditorProps> = ({
+export const ConfigEditor: React.FC<ConfigEditorProps> = ({
   initialConfig,
   onChange,
   darkMode,
@@ -52,5 +52,3 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({
     </div>
   );
 };
-
-export default ConfigEditor;

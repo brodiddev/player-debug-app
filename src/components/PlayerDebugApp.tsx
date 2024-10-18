@@ -15,13 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import VideoControls from "./VideoControls";
-import PlayerLibrarySelector from "./PlayerLibrarySelector";
+import { PlayerLibrarySelector } from "./library/PlayerLibrarySelector";
 import VideoEventTable from "./VideoEventTable";
 import useVideoPlayer from "@/hooks/useVideoPlayer";
 import useVideoEvents from "@/hooks/useLiveMedia";
 import { initLogUtils, clearLogs } from "./util/logUtils";
 import { SAMPLE_URLS } from "@/constant/player";
-import ConfigEditor from "./ConfigEditor";
+import { ConfigEditor } from "./config/ConfigEditor";
 import {
   defaultHlsJsConfig,
   defaultShakaConfig,
@@ -32,20 +32,14 @@ import {
   removeConfigFromStorage,
   loadConfigPersistence,
   saveConfigPersistence,
-} from "./configService";
+} from "@/components/config/configService";
 
 type Log = {
   time: string;
   message: string;
 };
 
-const DEBUGGER_VERSION = "1.0.0";
-
-const STORAGE_KEYS = {
-  CONFIG_PERSISTENCE: "config-persistence",
-  HLSJS_PLAYER_CONFIG: "hlsJs-player-config",
-  SHAKA_PLAYER_CONFIG: "shaka-player-config",
-};
+const DEBUGGER_VERSION = "1.0.1";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
