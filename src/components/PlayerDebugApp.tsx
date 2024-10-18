@@ -222,7 +222,7 @@ const PlayerDebugApp: React.FC = () => {
               onChange={handleConfigChange}
               darkMode={darkMode}
               configPersistenceEnabled={configPersistenceEnabled}
-              persistConfig={persistConfig}
+              saveConfig={persistConfig}
             />
             <div className="flex items-center mt-2">
               <Checkbox

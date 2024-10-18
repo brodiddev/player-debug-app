@@ -9,7 +9,7 @@ interface ConfigEditorProps {
   onChange: (config: any) => void;
   darkMode: boolean;
   configPersistenceEnabled: boolean;
-  persistConfig: (config: any) => void;
+  saveConfig: (config: any) => void;
 }
 
 const ConfigEditor: React.FC<ConfigEditorProps> = ({
@@ -17,7 +17,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({
   onChange,
   darkMode,
   configPersistenceEnabled,
-  persistConfig,
+  saveConfig,
 }) => {
   const [config, setConfig] = React.useState<string>(
     JSON.stringify(initialConfig, null, 2)
@@ -29,9 +29,18 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({
 
   useEffect(() => {
     if (configPersistenceEnabled) {
-      persistConfig(JSON.parse(config));
+      attemptToSaveConfig();
     }
-  }, [configPersistenceEnabled, config, persistConfig]);
+  }, [configPersistenceEnabled, config]);
+
+  const attemptToSaveConfig = () => {
+    try {
+      const parsedConfig = JSON.parse(config);
+      saveConfig(parsedConfig);
+    } catch (error) {
+      console.error("Invalid JSON format");
+    }
+  };
 
   const handleChange = (value: string) => {
     setConfig(value);
@@ -40,7 +49,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({
       onChange(parsedConfig);
 
       if (configPersistenceEnabled) {
-        persistConfig(parsedConfig);
+        saveConfig(parsedConfig);
       }
     } catch (error) {
       console.error("Invalid JSON format");
