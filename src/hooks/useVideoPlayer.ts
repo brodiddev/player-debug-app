@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { addLog } from "@/components/util/logUtils";
+import LogService from "@/components/util/LogService";
 
 declare global {
   interface Window {
@@ -79,7 +79,7 @@ const useVideoPlayer = () => {
           : `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
 
       script.onload = () => {
-        addLog(
+        LogService.addLog(
           `Successfully loaded ${library} player library version ${actualVersion}`
         );
         resolve();
@@ -87,7 +87,7 @@ const useVideoPlayer = () => {
 
       script.onerror = () => {
         const errorMessage = `Failed to load ${library} player library version ${actualVersion}`;
-        addLog(errorMessage);
+        LogService.addLog(errorMessage);
         alert(errorMessage);
         reject(new Error(errorMessage));
       };
@@ -113,11 +113,11 @@ const useVideoPlayer = () => {
         playerRef.current = new window.shaka.Player();
         await playerRef.current.attach(video);
         playerRef.current.configure(config);
-        addLog("Shaka player initialized and attached successfully");
+        LogService.addLog("Shaka player initialized and attached successfully");
       } else if (library === "hls" && window.Hls) {
         playerRef.current = new window.Hls(config);
         playerRef.current.attachMedia(video);
-        addLog("HLS.js player initialized successfully");
+        LogService.addLog("HLS.js player initialized successfully");
       } else {
         throw new Error(`${library} player not loaded`);
       }
@@ -144,16 +144,16 @@ const useVideoPlayer = () => {
         const [library] = playerLibrary.split("-");
         if (library === "shaka") {
           await playerRef.current.load(videoUrl);
-          addLog(`Shaka player: Loaded video source ${videoUrl}`);
+          LogService.addLog(`Shaka player: Loaded video source ${videoUrl}`);
         } else if (library === "hls") {
           playerRef.current.loadSource(videoUrl);
-          addLog(`HLS.js player: Loaded video source ${videoUrl}`);
+          LogService.addLog(`HLS.js player: Loaded video source ${videoUrl}`);
         }
 
         videoRef.current?.play();
-        addLog("Video loaded successfully");
+        LogService.addLog("Video loaded successfully");
       } catch (e: unknown) {
-        addLog(
+        LogService.addLog(
           `Error: ${
             e instanceof Error ? e.message : "An unknown error occurred"
           }`

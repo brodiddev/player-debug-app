@@ -17,13 +17,13 @@ import {
 import { PlayerLibrarySelector } from "./library/LibrarySelector";
 import useVideoPlayer from "@/hooks/useVideoPlayer";
 import useVideoEvents from "@/hooks/useLiveMedia";
-import { initLogDetect, clearLogs } from "./util/logUtils";
-import { SAMPLE_URLS } from "@/constant/player";
-import { ConfigEditor } from "./config/ConfigEditor";
+import LogService from "./util/LogService";
 import {
-  defaultHlsJsConfig,
-  defaultShakaConfig,
-} from "@/app/players/defaultConfig";
+  SAMPLE_URLS,
+  DEFAULT_HLSJS_CONFIG,
+  DEFAULT_SHAKA_CONFIG,
+} from "@/app/players/config";
+import { ConfigEditor } from "./config/ConfigEditor";
 import {
   loadConfigFromStorage,
   saveConfigToStorage,
@@ -36,7 +36,7 @@ import LogsPanel from "@/components/panels/LogsPanel";
 import PlaybackPanel from "@/components/panels/PlaybackPanel";
 import VideoEventsPanel from "@/components/panels/VideoEventsPanel";
 
-export const DEBUGGER_VERSION = "1.0.2";
+export const DEBUGGER_VERSION = "1.0.3";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -77,15 +77,15 @@ const PlayerDebugApp: React.FC = () => {
   const { videoEvents, resetVideoEvents } = useVideoEvents(videoRef);
 
   useEffect(() => {
-    initLogDetect(setLogs);
+    LogService.initLogDetection(setLogs);
     const persistedConfig = loadConfigFromStorage(playerLibrary);
     const persistedPersistence = loadConfigPersistence();
     setConfigPersistenceEnabled(persistedPersistence);
     setCurrentConfig(
       persistedConfig ||
         (playerLibrary.startsWith("shaka")
-          ? defaultShakaConfig
-          : defaultHlsJsConfig)
+          ? DEFAULT_SHAKA_CONFIG
+          : DEFAULT_HLSJS_CONFIG)
     );
   }, [playerLibrary]);
 
@@ -107,8 +107,8 @@ const PlayerDebugApp: React.FC = () => {
   const initPlayer = useCallback(() => {
     resetVideoPlayerState();
     resetVideoEvents();
-    clearLogs();
     setLogs([]);
+    LogService.clearLogs();
   }, [resetVideoPlayerState, resetVideoEvents]);
 
   const handleLoadMedia = useCallback(() => {

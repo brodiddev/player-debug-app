@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, RefObject } from "react";
-import { MEDIA_EVENTS_LIST } from "@/constant/player";
+import { MEDIA_EVENTS_LIST } from "@/app/players/event";
 import { setEventRecord, EventHistory } from "./useVideoEvent";
 
 const useVideoEvents = (videoRef: RefObject<HTMLVideoElement>) => {
