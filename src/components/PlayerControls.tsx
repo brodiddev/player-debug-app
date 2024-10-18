@@ -2,7 +2,7 @@ import React from "react";
 import { Volume2, VolumeX, FastForward } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
-interface VideoControlsProps {
+interface PlayerControlsProps {
   playbackRate: number;
   setPlaybackRate: (rate: number) => void;
   currentTime: number;
@@ -14,7 +14,7 @@ interface VideoControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
 }
 
-const VideoControls: React.FC<VideoControlsProps> = ({
+const PlayerControls: React.FC<PlayerControlsProps> = ({
   playbackRate,
   setPlaybackRate,
   currentTime,
@@ -25,6 +25,32 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   setIsMuted,
   videoRef,
 }) => {
+  const handlePlaybackRateChange = (value: number[]) => {
+    const newRate = value[0];
+    setPlaybackRate(newRate);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = newRate;
+    }
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      videoRef.current.muted = newVolume === 0;
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setVolume(isMuted ? videoRef.current.volume : 0);
+    }
+  };
+
   return (
     <div className="p-4 space-y-4">
       <div className="w-full">
@@ -38,12 +64,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
             max={2}
             step={0.1}
             value={[playbackRate]}
-            onValueChange={(value) => {
-              setPlaybackRate(value[0]);
-              if (videoRef.current) {
-                videoRef.current.playbackRate = value[0];
-              }
-            }}
+            onValueChange={handlePlaybackRateChange}
             className="w-full"
           />
         </div>
@@ -52,7 +73,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
       <div className="w-full">
         <label className="block text-sm font-medium mb-1">Volume</label>
         <div className="flex items-center space-x-2">
-          <button onClick={() => setIsMuted(!isMuted)}>
+          <button onClick={toggleMute}>
             {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
           </button>
           <Slider
@@ -60,14 +81,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
             max={1}
             step={0.01}
             value={[isMuted ? 0 : volume]}
-            onValueChange={(value) => {
-              setVolume(value[0]);
-              setIsMuted(value[0] === 0);
-              if (videoRef.current) {
-                videoRef.current.volume = value[0];
-                videoRef.current.muted = value[0] === 0;
-              }
-            }}
+            onValueChange={handleVolumeChange}
             className="w-full"
           />
         </div>
@@ -81,4 +95,4 @@ const VideoControls: React.FC<VideoControlsProps> = ({
   );
 };
 
-export default VideoControls;
+export default PlayerControls;

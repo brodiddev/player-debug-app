@@ -1,5 +1,5 @@
 import React from "react";
-import VideoControls from "@/components/VideoControls";
+import PlayerControls from "@/components/PlayerControls";
 
 const PlaybackPanel = ({
   playbackRate,
@@ -24,7 +24,7 @@ const PlaybackPanel = ({
 }) => (
   <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
     <h2 className="text-lg font-semibold mb-2">Playback Controls</h2>
-    <VideoControls
+    <PlayerControls
       playbackRate={playbackRate}
       setPlaybackRate={setPlaybackRate}
       currentTime={currentTime}

@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { savePlayerLibraryVersionToStorage } from "../config/configService";
 
 interface PlayerLibrarySelectorProps {
   playerLibrary: string;
@@ -27,6 +28,10 @@ export const PlayerLibrarySelector: React.FC<PlayerLibrarySelectorProps> = ({
 }) => {
   const handlePlayerLibraryChange = (value: string) => {
     setPlayerLibrary(value);
+
+    // 현재 플레이어 라이브버리 버전을 로컬 스토리지에 저장
+    savePlayerLibraryVersionToStorage(value);
+
     setShowCustomVersion(value === "shaka-custom" || value === "hls-custom");
     if (value !== "shaka-custom" && value !== "hls-custom") {
       setCustomVersion("");

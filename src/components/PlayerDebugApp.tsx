@@ -30,6 +30,9 @@ import {
   removeConfigFromStorage,
   loadConfigPersistence,
   saveConfigPersistence,
+  loadVideoUrlFromStorage,
+  loadPlayerLibraryVersionFromStorage,
+  saveVideoUrlToStorage,
 } from "@/components/config/configService";
 import InfoPanel from "@/components/panels/InfoPanels";
 import LogsPanel from "@/components/panels/LogsPanel";
@@ -78,8 +81,13 @@ const PlayerDebugApp: React.FC = () => {
 
   useEffect(() => {
     LogService.initLogDetection(setLogs);
+
+    // 로컬 스토리지의 url, library, config, persist 여부 상태를 가져옴
     const persistedConfig = loadConfigFromStorage(playerLibrary);
     const persistedPersistence = loadConfigPersistence();
+    const persistedVideoUrl = loadVideoUrlFromStorage();
+    const persistedPlayerLibrary = loadPlayerLibraryVersionFromStorage();
+
     setConfigPersistenceEnabled(persistedPersistence);
     setCurrentConfig(
       persistedConfig ||
@@ -87,7 +95,17 @@ const PlayerDebugApp: React.FC = () => {
           ? DEFAULT_SHAKA_CONFIG
           : DEFAULT_HLSJS_CONFIG)
     );
+
+    // 입력 URL과 선택 라이브러리 로컬 스토리지 저장
+    setVideoUrl(persistedVideoUrl);
+    setPlayerLibrary(persistedPlayerLibrary);
   }, [playerLibrary]);
+
+  // 샘플 URL과 입력 URL 모두 로컬 스토리지 저장
+  const handleVideoUrlUpdate = (url: string) => {
+    setVideoUrl(url);
+    saveVideoUrlToStorage(url);
+  };
 
   const handleConfigChange = (newConfig: any) => {
     setCurrentConfig(newConfig);
@@ -157,10 +175,10 @@ const PlayerDebugApp: React.FC = () => {
             type="text"
             placeholder="Enter video URL"
             value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
+            onChange={(e) => handleVideoUrlUpdate(e.target.value)}
             className="flex-grow"
           />
-          <Select onValueChange={setVideoUrl}>
+          <Select onValueChange={handleVideoUrlUpdate}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select sample URL" />
             </SelectTrigger>

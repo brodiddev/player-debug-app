@@ -2,6 +2,8 @@ const STORAGE_KEYS = {
   CONFIG_PERSISTENCE: "config-persistence",
   HLSJS_PLAYER_CONFIG: "hlsJs-player-config",
   SHAKA_PLAYER_CONFIG: "shaka-player-config",
+  VIDEO_URL: "video-url",
+  PLAYER_LIBRARY_VERSION: "player-library-version",
 };
 
 export const getConfigKey = (playerLibrary: string) => {
@@ -37,4 +39,20 @@ export const saveConfigPersistence = (enabled: boolean) => {
     STORAGE_KEYS.CONFIG_PERSISTENCE,
     JSON.stringify(enabled)
   );
+};
+
+export const saveVideoUrlToStorage = (url: string) => {
+  localStorage.setItem(STORAGE_KEYS.VIDEO_URL, url);
+};
+
+export const loadVideoUrlFromStorage = () => {
+  return localStorage.getItem(STORAGE_KEYS.VIDEO_URL) || "";
+};
+
+export const savePlayerLibraryVersionToStorage = (playerLibrary: string) => {
+  localStorage.setItem(STORAGE_KEYS.PLAYER_LIBRARY_VERSION, playerLibrary);
+};
+
+export const loadPlayerLibraryVersionFromStorage = () => {
+  return localStorage.getItem(STORAGE_KEYS.PLAYER_LIBRARY_VERSION) || "";
 };
