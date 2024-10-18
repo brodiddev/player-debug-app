@@ -1,5 +1,5 @@
 import React from "react";
-import { EventHistory } from "@/components/debugger/videoEvent";
+import { EventHistory } from "@/hooks/useVideoEvent";
 
 interface VideoEventTableProps {
   events: EventHistory[];
