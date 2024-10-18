@@ -1,4 +1,4 @@
-export const defaultHlsConfig = {
+export const defaultHlsJsConfig = {
   autoStartLoad: true,
   debug: true,
 };

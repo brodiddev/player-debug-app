@@ -23,7 +23,7 @@ import { initLogUtils, clearLogs } from "./util/logUtils";
 import { SAMPLE_URLS } from "@/constant/player";
 import ConfigEditor from "./ConfigEditor";
 import {
-  defaultHlsConfig,
+  defaultHlsJsConfig,
   defaultShakaConfig,
 } from "@/app/players/defaultConfig";
 
@@ -100,11 +100,12 @@ const PlayerDebugApp: React.FC = () => {
       setCurrentConfig(
         playerLibrary.startsWith("shaka")
           ? defaultShakaConfig
-          : defaultHlsConfig
+          : defaultHlsJsConfig
       );
     }
   }, [playerLibrary]);
 
+  // 현재 플레이어 종류에 따라 configEditor의 config를 로컬 스토리지에 저장
   const persistConfig = (config: any) => {
     const storageKey = playerLibrary.startsWith("shaka")
       ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
@@ -127,7 +128,9 @@ const PlayerDebugApp: React.FC = () => {
       JSON.stringify(checked)
     );
 
-    if (!checked) {
+    if (checked) {
+      persistConfig(currentConfig);
+    } else {
       localStorage.removeItem(
         playerLibrary.startsWith("shaka")
           ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
@@ -213,19 +216,22 @@ const PlayerDebugApp: React.FC = () => {
             <Button onClick={handleLoadMedia}>Load</Button>
           </div>
 
-          <div className="flex space-x-2 mb-4">
-            <Checkbox
-              checked={configPersistenceEnabled}
-              onCheckedChange={handlePersistenceChange}
+          <div className="flex flex-col items-center">
+            <ConfigEditor
+              initialConfig={currentConfig}
+              onChange={handleConfigChange}
+              darkMode={darkMode}
+              configPersistenceEnabled={configPersistenceEnabled}
+              persistConfig={persistConfig}
             />
-            <span className="ml-2">Persist Configuration</span>
+            <div className="flex items-center mt-2">
+              <Checkbox
+                checked={configPersistenceEnabled}
+                onCheckedChange={handlePersistenceChange}
+              />
+              <span className="ml-2">persist</span>
+            </div>
           </div>
-
-          <ConfigEditor
-            initialConfig={currentConfig}
-            onChange={handleConfigChange}
-            darkMode={darkMode}
-          />
 
           <div className="relative">
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
