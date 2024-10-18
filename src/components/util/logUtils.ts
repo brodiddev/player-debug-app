@@ -2,7 +2,7 @@ import { getTimestamp } from "./debuggerUtils";
 
 let setLogsFunction: ((logs: (prevLogs: any[]) => any[]) => void) | undefined;
 
-export const initLogUtils = (
+export const initLogDetect = (
   setLogs: (logs: (prevLogs: any[]) => any[]) => void
 ) => {
   setLogsFunction = setLogs;

@@ -35,12 +35,7 @@ export const setEventRecord = (
   let description = `buffered=${bufferedRanges.join(" ")}`;
 
   if (event.type === MEDIA_EVENTS_LIST.waiting) {
-    const bufferStatus = getBufferStatus(video);
-    const bufferingCause = getBufferingCause(video);
-    const tabActive = document.visibilityState === "visible" ? 1 : 0;
-    description += `, cause=${bufferingCause}, left=${bufferStatus.left.toFixed(
-      3
-    )}, tabActive=${tabActive}`;
+    description += generateWaitingDescription(video);
   }
 
   const eventRecord: EventHistory = {
@@ -53,12 +48,18 @@ export const setEventRecord = (
   addPlayerEvent(eventRecord);
 };
 
+const generateWaitingDescription = (video: HTMLMediaElement): string => {
+  const bufferStatus = getBufferStatus(video);
+  const bufferingCause = getBufferingCause(video);
+  const tabActive = document.visibilityState === "visible" ? 1 : 0;
+  return `, cause=${bufferingCause}, left=${bufferStatus.left.toFixed(
+    3
+  )}, tabActive=${tabActive}`;
+};
+
 const getBufferingCause = (video: HTMLMediaElement): BufferingCause => {
   const bufferStatus = getBufferStatus(video);
-  const isInitializing =
-    !video.played.length ||
-    (video.currentTime === video.played.start(0) &&
-      video.played.end(0) - video.played.start(0) < 0.1);
+  const isInitializing = isInitializingVideo(video);
   const isSeeking = video.seeking;
   const isBuffering =
     video.readyState <= 2 && bufferStatus.left < LOW_BUFFER_DURATION;
@@ -70,4 +71,12 @@ const getBufferingCause = (video: HTMLMediaElement): BufferingCause => {
   if (frameDrop) return BufferingCause.FRAME_DROP;
 
   return BufferingCause.UNKNOWN;
+};
+
+const isInitializingVideo = (video: HTMLMediaElement): boolean => {
+  return (
+    !video.played.length ||
+    (video.currentTime === video.played.start(0) &&
+      video.played.end(0) - video.played.start(0) < 0.1)
+  );
 };

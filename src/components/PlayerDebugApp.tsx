@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "./ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -14,12 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import VideoControls from "./VideoControls";
-import { PlayerLibrarySelector } from "./library/PlayerLibrarySelector";
-import VideoEventTable from "./VideoEventTable";
+import { PlayerLibrarySelector } from "./library/LibrarySelector";
 import useVideoPlayer from "@/hooks/useVideoPlayer";
 import useVideoEvents from "@/hooks/useLiveMedia";
-import { initLogUtils, clearLogs } from "./util/logUtils";
+import { initLogDetect, clearLogs } from "./util/logUtils";
 import { SAMPLE_URLS } from "@/constant/player";
 import { ConfigEditor } from "./config/ConfigEditor";
 import {
@@ -33,17 +31,16 @@ import {
   loadConfigPersistence,
   saveConfigPersistence,
 } from "@/components/config/configService";
+import InfoPanel from "@/components/panels/InfoPanels";
+import LogsPanel from "@/components/panels/LogsPanel";
+import PlaybackPanel from "@/components/panels/PlaybackPanel";
+import VideoEventsPanel from "@/components/panels/VideoEventsPanel";
 
-type Log = {
-  time: string;
-  message: string;
-};
-
-const DEBUGGER_VERSION = "1.0.1";
+export const DEBUGGER_VERSION = "1.0.2";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [visibleSections, setVisibleSections] = useState({
     info: true,
     playback: true,
@@ -80,12 +77,9 @@ const PlayerDebugApp: React.FC = () => {
   const { videoEvents, resetVideoEvents } = useVideoEvents(videoRef);
 
   useEffect(() => {
-    // 비디오 이벤트 로깅
-    initLogUtils(setLogs);
-
+    initLogDetect(setLogs);
     const persistedConfig = loadConfigFromStorage(playerLibrary);
     const persistedPersistence = loadConfigPersistence();
-
     setConfigPersistenceEnabled(persistedPersistence);
     setCurrentConfig(
       persistedConfig ||
@@ -105,15 +99,12 @@ const PlayerDebugApp: React.FC = () => {
   const handlePersistenceChange = (checked: boolean) => {
     setConfigPersistenceEnabled(checked);
     saveConfigPersistence(checked);
-
-    if (checked) {
-      saveConfigToStorage(playerLibrary, currentConfig);
-    } else {
-      removeConfigFromStorage(playerLibrary);
-    }
+    checked
+      ? saveConfigToStorage(playerLibrary, currentConfig)
+      : removeConfigFromStorage(playerLibrary);
   };
 
-  const resetAllData = useCallback(() => {
+  const initPlayer = useCallback(() => {
     resetVideoPlayerState();
     resetVideoEvents();
     clearLogs();
@@ -128,10 +119,9 @@ const PlayerDebugApp: React.FC = () => {
       alert("Please enter a custom version for the selected player library.");
       return;
     }
-
-    resetAllData();
+    initPlayer();
     loadMedia(currentConfig);
-  }, [resetAllData, loadMedia, currentConfig, playerLibrary, customVersion]);
+  }, [initPlayer, loadMedia, currentConfig, playerLibrary, customVersion]);
 
   const toggleSection = (section: keyof typeof visibleSections) => {
     setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -151,11 +141,7 @@ const PlayerDebugApp: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm">Dark Mode</span>
-            <Switch
-              checked={darkMode}
-              onCheckedChange={setDarkMode}
-              className="mr-2"
-            />
+            <Switch checked={darkMode} onCheckedChange={setDarkMode} />
             {darkMode ? (
               <Moon className="h-5 w-5 text-blue-400" />
             ) : (
@@ -165,132 +151,95 @@ const PlayerDebugApp: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto p-6">
-        <div className="space-y-6">
-          <div className="flex space-x-2">
-            <Input
-              type="text"
-              placeholder="Enter video URL"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="flex-grow"
-            />
-            <Select onValueChange={setVideoUrl}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select sample URL" />
-              </SelectTrigger>
-              <SelectContent>
-                {SAMPLE_URLS.map((sample, index) => (
-                  <SelectItem key={index} value={sample.url}>
-                    {sample.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <PlayerLibrarySelector
-              playerLibrary={playerLibrary}
-              setPlayerLibrary={setPlayerLibrary}
-              customVersion={customVersion}
-              setCustomVersion={setCustomVersion}
-              showCustomVersion={showCustomVersion}
-              setShowCustomVersion={setShowCustomVersion}
-            />
-            <Button onClick={handleLoadMedia}>Load</Button>
-          </div>
+      <main className="container mx-auto p-6 space-y-6">
+        <div className="flex space-x-2">
+          <Input
+            type="text"
+            placeholder="Enter video URL"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            className="flex-grow"
+          />
+          <Select onValueChange={setVideoUrl}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select sample URL" />
+            </SelectTrigger>
+            <SelectContent>
+              {SAMPLE_URLS.map((sample, index) => (
+                <SelectItem key={index} value={sample.url}>
+                  {sample.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <PlayerLibrarySelector
+            playerLibrary={playerLibrary}
+            setPlayerLibrary={setPlayerLibrary}
+            customVersion={customVersion}
+            setCustomVersion={setCustomVersion}
+            showCustomVersion={showCustomVersion}
+            setShowCustomVersion={setShowCustomVersion}
+          />
+          <Button onClick={handleLoadMedia}>Load</Button>
+        </div>
 
-          <div className="flex flex-col items-center">
-            <ConfigEditor
-              initialConfig={currentConfig}
-              onChange={handleConfigChange}
-              darkMode={darkMode}
-              configPersistenceEnabled={configPersistenceEnabled}
+        <div className="flex flex-col items-center">
+          <ConfigEditor
+            initialConfig={currentConfig}
+            onChange={handleConfigChange}
+            darkMode={darkMode}
+            configPersistenceEnabled={configPersistenceEnabled}
+          />
+          <div className="flex items-center mt-2">
+            <Checkbox
+              checked={configPersistenceEnabled}
+              onCheckedChange={handlePersistenceChange}
             />
-            <div className="flex items-center mt-2">
+            <span className="ml-2">persist</span>
+          </div>
+        </div>
+
+        <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+          <video ref={videoRef} controls className="w-full h-full" />
+        </div>
+
+        <div className="flex space-x-4 mb-4">
+          {Object.entries(visibleSections).map(([key, value]) => (
+            <label key={key} className="flex items-center">
               <Checkbox
-                checked={configPersistenceEnabled}
-                onCheckedChange={handlePersistenceChange}
+                checked={value}
+                onCheckedChange={() =>
+                  toggleSection(key as keyof typeof visibleSections)
+                }
               />
-              <span className="ml-2">persist</span>
-            </div>
-          </div>
+              <span className="ml-2">
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </span>
+            </label>
+          ))}
+        </div>
 
-          <div className="relative">
-            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              <video ref={videoRef} controls className="w-full h-full" />
-            </div>
-          </div>
-
-          <div className="flex space-x-4 mb-4">
-            {Object.entries(visibleSections).map(([key, value]) => (
-              <label key={key} className="flex items-center">
-                <Checkbox
-                  checked={value}
-                  onCheckedChange={() =>
-                    toggleSection(key as keyof typeof visibleSections)
-                  }
-                />
-                <span className="ml-2">
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </span>
-              </label>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {visibleSections.info && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">Info</h2>
-                <p>Debugger Version: {DEBUGGER_VERSION}</p>
-                <p>User Agent: {navigator.userAgent}</p>
-                <p>
-                  Buffering Count (Initial/Playback): {bufferingCount.initial}/
-                  {bufferingCount.playback}
-                </p>
-              </div>
-            )}
-
-            {visibleSections.logs && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">Logs</h2>
-                <div className="h-48 overflow-y-auto">
-                  {logs.map((log, index) => (
-                    <div key={index} className="mb-1">
-                      <span className="text-sm text-gray-500">{log.time}</span>:{" "}
-                      {log.message}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {visibleSections.playback && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">
-                  Playback Controls
-                </h2>
-                <VideoControls
-                  playbackRate={playbackRate}
-                  setPlaybackRate={setPlaybackRate}
-                  currentTime={currentTime}
-                  duration={duration}
-                  volume={volume}
-                  setVolume={setVolume}
-                  isMuted={isMuted}
-                  setIsMuted={setIsMuted}
-                  videoRef={videoRef}
-                />
-              </div>
-            )}
-
-            {visibleSections.videoEvents && (
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">Video Events</h2>
-                <div className="h-64 overflow-y-auto">
-                  <VideoEventTable events={videoEvents} />
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          {visibleSections.info && (
+            <InfoPanel bufferingCount={bufferingCount} />
+          )}
+          {visibleSections.logs && <LogsPanel logs={logs} />}
+          {visibleSections.playback && (
+            <PlaybackPanel
+              playbackRate={playbackRate}
+              setPlaybackRate={setPlaybackRate}
+              currentTime={currentTime}
+              duration={duration}
+              volume={volume}
+              setVolume={setVolume}
+              isMuted={isMuted}
+              setIsMuted={setIsMuted}
+              videoRef={videoRef}
+            />
+          )}
+          {visibleSections.videoEvents && (
+            <VideoEventsPanel events={videoEvents} />
+          )}
         </div>
 
         <Alert className="mt-6">
@@ -302,15 +251,11 @@ const PlayerDebugApp: React.FC = () => {
         </Alert>
       </main>
 
-      <footer className="bg-gray-100 dark:bg-gray-800 py-4">
-        <div className="container mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>
-            Contact:{" "}
-            <a href="mailto:devuxr@naver.com" className="hover:underline">
-              devuxr@naver.com
-            </a>
-          </p>
-        </div>
+      <footer className="bg-gray-100 dark:bg-gray-800 py-4 text-center text-sm">
+        Contact:{" "}
+        <a href="mailto:devuxr@naver.com" className="hover:underline">
+          devuxr@naver.com
+        </a>
       </footer>
     </div>
   );
