@@ -1,8 +1,3 @@
-/**
- * what is use client?
- * @see https://nextjs.org/learn/react-foundations/server-and-client-components
- * @see https://nextjs.org/docs/app/building-your-application/rendering
- */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -39,6 +34,12 @@ type Log = {
 
 const DEBUGGER_VERSION = "1.0.0";
 
+const STORAGE_KEYS = {
+  CONFIG_PERSISTENCE: "config-persistence",
+  HLSJS_PLAYER_CONFIG: "hlsJs-player-config",
+  SHAKA_PLAYER_CONFIG: "shaka-player-config",
+};
+
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
@@ -48,6 +49,8 @@ const PlayerDebugApp: React.FC = () => {
     videoEvents: true,
     logs: true,
   });
+  const [configPersistenceEnabled, setConfigPersistenceEnabled] =
+    useState(false);
   const [currentConfig, setCurrentConfig] = useState<any>(null);
 
   const {
@@ -76,11 +79,62 @@ const PlayerDebugApp: React.FC = () => {
   const { videoEvents, resetVideoEvents } = useVideoEvents(videoRef);
 
   useEffect(() => {
+    // 비디오 이벤트 로깅
     initLogUtils(setLogs);
-    setCurrentConfig(
-      playerLibrary.startsWith("shaka") ? defaultShakaConfig : defaultHlsConfig
+
+    // 현재 선택된 플레이어에 따라 configEditor 제공
+    const storageKey = playerLibrary.startsWith("shaka")
+      ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
+      : STORAGE_KEYS.HLSJS_PLAYER_CONFIG;
+
+    const persistedConfig = localStorage.getItem(storageKey);
+    const persistedPersistence = JSON.parse(
+      localStorage.getItem(STORAGE_KEYS.CONFIG_PERSISTENCE) || "false"
     );
+
+    setConfigPersistenceEnabled(persistedPersistence);
+
+    if (persistedConfig) {
+      setCurrentConfig(JSON.parse(persistedConfig));
+    } else {
+      setCurrentConfig(
+        playerLibrary.startsWith("shaka")
+          ? defaultShakaConfig
+          : defaultHlsConfig
+      );
+    }
   }, [playerLibrary]);
+
+  const persistConfig = (config: any) => {
+    const storageKey = playerLibrary.startsWith("shaka")
+      ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
+      : STORAGE_KEYS.HLSJS_PLAYER_CONFIG;
+
+    if (configPersistenceEnabled) {
+      localStorage.setItem(storageKey, JSON.stringify(config));
+    }
+  };
+
+  const handleConfigChange = (newConfig: any) => {
+    setCurrentConfig(newConfig);
+    persistConfig(newConfig);
+  };
+
+  const handlePersistenceChange = (checked: boolean) => {
+    setConfigPersistenceEnabled(checked);
+    localStorage.setItem(
+      STORAGE_KEYS.CONFIG_PERSISTENCE,
+      JSON.stringify(checked)
+    );
+
+    if (!checked) {
+      localStorage.removeItem(
+        playerLibrary.startsWith("shaka")
+          ? STORAGE_KEYS.SHAKA_PLAYER_CONFIG
+          : STORAGE_KEYS.HLSJS_PLAYER_CONFIG
+      );
+    }
+  };
 
   const resetAllData = useCallback(() => {
     resetVideoPlayerState();
@@ -159,9 +213,17 @@ const PlayerDebugApp: React.FC = () => {
             <Button onClick={handleLoadMedia}>Load</Button>
           </div>
 
+          <div className="flex space-x-2 mb-4">
+            <Checkbox
+              checked={configPersistenceEnabled}
+              onCheckedChange={handlePersistenceChange}
+            />
+            <span className="ml-2">Persist Configuration</span>
+          </div>
+
           <ConfigEditor
             initialConfig={currentConfig}
-            onChange={setCurrentConfig}
+            onChange={handleConfigChange}
             darkMode={darkMode}
           />
 

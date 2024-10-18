@@ -121,6 +121,8 @@ const useVideoPlayer = () => {
         throw new Error(`${library} player not loaded`);
       }
 
+      // FIXME: muted
+      video.muted = true;
       (window as any).player = playerRef.current;
     },
     [playerLibrary]
