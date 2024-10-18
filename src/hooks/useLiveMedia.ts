@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, RefObject } from "react";
 import { MEDIA_EVENTS_LIST } from "@/constant/player";
 import { setEventRecord, EventHistory } from "./useVideoEvent";
 
