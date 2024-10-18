@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { loadPlayerLibrary } from "@/components/library/libraryLoader";
 import LogService from "@/components/util/LogService";
 
 declare global {
@@ -11,7 +12,6 @@ declare global {
 }
 
 const useVideoPlayer = () => {
-  // State management
   const [videoUrl, setVideoUrl] = useState("");
   const [playbackRate, setPlaybackRate] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
@@ -29,7 +29,6 @@ const useVideoPlayer = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
 
-  // Resets player state
   const resetVideoPlayerState = useCallback(() => {
     setPlaybackRate(1);
     setCurrentTime(0);
@@ -39,7 +38,6 @@ const useVideoPlayer = () => {
     setBufferingCount({ initial: 0, playback: 0 });
   }, []);
 
-  // 이벤트 리스너 등록
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -66,43 +64,14 @@ const useVideoPlayer = () => {
     };
   }, [currentTime]);
 
-  // 라이브러리 로드 콜백
-  const loadPlayerLibrary = useCallback(() => {
-    return new Promise<void>((resolve, reject) => {
-      const script = document.createElement("script");
-      const [library, version] = playerLibrary.split("-");
-      const actualVersion = showCustomVersion ? customVersion : version;
-
-      script.src =
-        library === "shaka"
-          ? `https://cdnjs.cloudflare.com/ajax/libs/shaka-player/${actualVersion}/shaka-player.compiled.js`
-          : `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
-
-      script.onload = () => {
-        LogService.addLog(
-          `Successfully loaded ${library} player library version ${actualVersion}`
-        );
-        resolve();
-      };
-
-      script.onerror = () => {
-        const errorMessage = `Failed to load ${library} player library version ${actualVersion}`;
-        LogService.addLog(errorMessage);
-        alert(errorMessage);
-        reject(new Error(errorMessage));
-      };
-
-      document.body.appendChild(script);
-    });
-  }, [playerLibrary, showCustomVersion, customVersion]);
-
-  // Initializes the player
   const initializePlayer = useCallback(
     async (config: any) => {
       const video = videoRef.current;
-      if (!video) return;
+      if (!video) {
+        LogService.addLog("Video element not available");
+        return;
+      }
 
-      // Destroy existing player
       if (playerRef.current?.destroy) {
         await playerRef.current.destroy();
         playerRef.current = null;
@@ -119,6 +88,7 @@ const useVideoPlayer = () => {
         playerRef.current.attachMedia(video);
         LogService.addLog("HLS.js player initialized successfully");
       } else {
+        LogService.addLog(`${library} player not loaded`);
         throw new Error(`${library} player not loaded`);
       }
 
@@ -129,7 +99,6 @@ const useVideoPlayer = () => {
     [playerLibrary]
   );
 
-  // 미디어 재생
   const loadMedia = useCallback(
     async (config: any) => {
       if (!videoUrl.trim()) {
@@ -138,20 +107,27 @@ const useVideoPlayer = () => {
       }
 
       try {
-        await loadPlayerLibrary();
+        await loadPlayerLibrary(
+          playerLibrary,
+          customVersion,
+          showCustomVersion
+        );
         await initializePlayer(config);
 
+        const video = videoRef.current;
+        if (!video) return;
+
         const [library] = playerLibrary.split("-");
-        if (library === "shaka") {
+        if (library === "shaka" && playerRef.current) {
           await playerRef.current.load(videoUrl);
           LogService.addLog(`Shaka player: Loaded video source ${videoUrl}`);
-        } else if (library === "hls") {
+        } else if (library === "hls" && playerRef.current) {
           playerRef.current.loadSource(videoUrl);
           LogService.addLog(`HLS.js player: Loaded video source ${videoUrl}`);
         }
 
-        videoRef.current?.play();
-        LogService.addLog("Video loaded successfully");
+        video.play();
+        LogService.addLog("Video loaded and playing successfully");
       } catch (e: unknown) {
         LogService.addLog(
           `Error: ${
@@ -160,7 +136,13 @@ const useVideoPlayer = () => {
         );
       }
     },
-    [videoUrl, playerLibrary, loadPlayerLibrary, initializePlayer]
+    [
+      videoUrl,
+      playerLibrary,
+      customVersion,
+      showCustomVersion,
+      initializePlayer,
+    ]
   );
 
   return {
