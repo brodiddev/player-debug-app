@@ -40,7 +40,7 @@ import PlaybackPanel from "@/components/panels/PlaybackPanel";
 import VideoEventsPanel from "@/components/panels/VideoEventsPanel";
 import MediaChunksPanel from "@/components/panels/MediaChunkPanel";
 
-export const DEBUGGER_VERSION = "v1.0.4";
+export const DEBUGGER_VERSION = "v1.0.5";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
