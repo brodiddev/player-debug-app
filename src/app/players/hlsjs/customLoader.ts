@@ -50,7 +50,7 @@ export function createCustomLoader() {
             data = this.request!.response;
           }
 
-          console.info("@@ response data: ", data);
+          // console.info("@@ response data: ", data);
 
           stats.loading.end = performance.now();
           stats.total = data.byteLength || data.length;

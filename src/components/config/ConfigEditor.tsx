@@ -35,7 +35,7 @@ export const ConfigEditor: React.FC<ConfigEditorProps> = ({
   };
 
   return (
-    <div className="mx-auto w-1/2">
+    <div className="mx-auto w-full">
       <AceEditor
         mode="json"
         theme={darkMode ? "twilight" : "github"}
@@ -44,7 +44,7 @@ export const ConfigEditor: React.FC<ConfigEditorProps> = ({
         name="config-editor"
         editorProps={{ $blockScrolling: true }}
         width="100%"
-        height="300px"
+        height="200px"
         setOptions={{
           useWorker: false,
         }}

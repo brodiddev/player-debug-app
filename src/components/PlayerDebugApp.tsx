@@ -177,95 +177,112 @@ const PlayerDebugApp: React.FC = () => {
       </header>
 
       <main className="container mx-auto p-6 space-y-6">
-        <div className="flex space-x-2">
-          <Input
-            type="text"
-            placeholder="Enter video URL"
-            value={videoUrl}
-            onChange={(e) => handleVideoUrlUpdate(e.target.value)}
-            className="flex-grow"
-          />
-          <Select onValueChange={handleVideoUrlUpdate}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select sample URL" />
-            </SelectTrigger>
-            <SelectContent>
-              {SAMPLE_URLS.map((sample, index) => (
-                <SelectItem key={index} value={sample.url}>
-                  {sample.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <PlayerLibrarySelector
-            playerLibrary={playerLibrary}
-            setPlayerLibrary={setPlayerLibrary}
-            customVersion={customVersion}
-            setCustomVersion={setCustomVersion}
-            showCustomVersion={showCustomVersion}
-            setShowCustomVersion={setShowCustomVersion}
-          />
-          <Button onClick={handleLoadMedia}>Load</Button>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <ConfigEditor
-            initialConfig={currentConfig}
-            onChange={handleConfigChange}
-            darkMode={darkMode}
-            configPersistenceEnabled={configPersistenceEnabled}
-          />
-          <div className="flex items-center mt-2">
-            <Checkbox
-              checked={configPersistenceEnabled}
-              onCheckedChange={handlePersistenceChange}
-            />
-            <span className="ml-2">persist</span>
-          </div>
-        </div>
-
-        <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-          <video ref={videoRef} controls className="w-full h-full" />
-        </div>
-
-        <div className="flex space-x-4 mb-4">
-          {Object.entries(visibleSections).map(([key, value]) => (
-            <label key={key} className="flex items-center">
-              <Checkbox
-                checked={value}
-                onCheckedChange={() =>
-                  toggleSection(key as keyof typeof visibleSections)
-                }
+        <div className="flex flex-col md:flex-row space-x-4">
+          {/* left side*/}
+          <div className="flex flex-col w-full md:w-1/2 space-y-4">
+            {/* URL 입력 영역 */}
+            <div className="flex space-x-2">
+              <Input
+                type="text"
+                placeholder="Enter video URL"
+                value={videoUrl}
+                onChange={(e) => handleVideoUrlUpdate(e.target.value)}
+                className="flex-grow"
               />
-              <span className="ml-2">
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-              </span>
-            </label>
-          ))}
-        </div>
+              <Select onValueChange={handleVideoUrlUpdate}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select sample URL" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SAMPLE_URLS.map((sample, index) => (
+                    <SelectItem key={index} value={sample.url}>
+                      {sample.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <PlayerLibrarySelector
+                playerLibrary={playerLibrary}
+                setPlayerLibrary={setPlayerLibrary}
+                customVersion={customVersion}
+                setCustomVersion={setCustomVersion}
+                showCustomVersion={showCustomVersion}
+                setShowCustomVersion={setShowCustomVersion}
+              />
+              <Button onClick={handleLoadMedia}>Load</Button>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {visibleSections.info && (
-            <InfoPanel bufferingCount={bufferingCount} />
-          )}
-          {visibleSections.logs && <LogsPanel logs={logs} />}
-          {visibleSections.playback && (
-            <PlaybackPanel
-              playbackRate={playbackRate}
-              setPlaybackRate={setPlaybackRate}
-              currentTime={currentTime}
-              duration={duration}
-              volume={volume}
-              setVolume={setVolume}
-              isMuted={isMuted}
-              setIsMuted={setIsMuted}
-              videoRef={videoRef}
+            {/* ConfigEditor */}
+            <ConfigEditor
+              initialConfig={currentConfig}
+              onChange={handleConfigChange}
+              darkMode={darkMode}
+              configPersistenceEnabled={configPersistenceEnabled}
             />
-          )}
-          {visibleSections.videoEvents && (
-            <VideoEventsPanel events={videoEvents} />
-          )}
-          {visibleSections.mediaChunks && <MediaChunksPanel />}
+
+            {/* Persist 체크박스 */}
+            <div className="flex justify-center mt-2">
+              <Checkbox
+                checked={configPersistenceEnabled}
+                onCheckedChange={handlePersistenceChange}
+              />
+              <span className="ml-2">persist</span>
+            </div>
+
+            {/* 비디오 */}
+            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+              <video ref={videoRef} controls className="w-full h-full" />
+            </div>
+
+            {/* Logs 패널 */}
+            <div className="mt-6">
+              {visibleSections.logs && <LogsPanel logs={logs} />}
+            </div>
+          </div>
+
+          {/* right side */}
+          <div className="flex flex-col w-full md:w-1/2 space-y-4">
+            {/* 패널 체크박스 */}
+            <div className="flex space-x-4 mb-4">
+              {Object.entries(visibleSections).map(([key, value]) => (
+                <label key={key} className="flex items-center">
+                  <Checkbox
+                    checked={value}
+                    onCheckedChange={() =>
+                      toggleSection(key as keyof typeof visibleSections)
+                    }
+                  />
+                  <span className="ml-2">
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* 디버그 패널들 */}
+            <div className="flex flex-col space-y-4">
+              {visibleSections.info && (
+                <InfoPanel bufferingCount={bufferingCount} />
+              )}
+              {visibleSections.playback && (
+                <PlaybackPanel
+                  playbackRate={playbackRate}
+                  setPlaybackRate={setPlaybackRate}
+                  currentTime={currentTime}
+                  duration={duration}
+                  volume={volume}
+                  setVolume={setVolume}
+                  isMuted={isMuted}
+                  setIsMuted={setIsMuted}
+                  videoRef={videoRef}
+                />
+              )}
+              {visibleSections.videoEvents && (
+                <VideoEventsPanel events={videoEvents} />
+              )}
+              {visibleSections.mediaChunks && <MediaChunksPanel />}
+            </div>
+          </div>
         </div>
 
         <Alert className="mt-6">
@@ -277,6 +294,7 @@ const PlayerDebugApp: React.FC = () => {
         </Alert>
       </main>
 
+      {/* footer */}
       <footer className="bg-gray-100 dark:bg-gray-800 py-4 text-center text-sm">
         Contact:{" "}
         <a href="mailto:devuxr@naver.com" className="hover:underline">
