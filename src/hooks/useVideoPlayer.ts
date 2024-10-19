@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { loadPlayerLibrary } from "@/components/library/libraryLoader";
 import LogService from "@/components/util/LogService";
+import { createCustomLoader } from "@/app/players/hlsjs/customLoader";
 
 declare global {
   interface Window {
@@ -84,9 +85,17 @@ const useVideoPlayer = () => {
         playerRef.current.configure(config);
         LogService.addLog("Shaka player initialized and attached successfully");
       } else if (library === "hls" && window.Hls) {
-        playerRef.current = new window.Hls(config);
+        const customConfig = {
+          ...config,
+          loader: createCustomLoader(), // 커스텀 로더를 설정
+        };
+        LogService.addLog("Creating Hls instance with custom loader");
+
+        playerRef.current = new window.Hls(customConfig);
         playerRef.current.attachMedia(video);
-        LogService.addLog("HLS.js player initialized successfully");
+        LogService.addLog(
+          "HLS.js player initialized and media attached successfully"
+        );
       } else {
         LogService.addLog(`${library} player not loaded`);
         throw new Error(`${library} player not loaded`);

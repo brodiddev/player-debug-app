@@ -16,10 +16,16 @@ export const loadPlayerLibrary = (
         : `https://cdn.jsdelivr.net/npm/hls.js@${actualVersion}`;
 
     script.onload = () => {
-      LogService.addLog(
-        `Successfully loaded ${library} player library version ${actualVersion}`
-      );
-      resolve();
+      if (library === "hls" && !window.Hls) {
+        reject(new Error("HLS.js failed to load"));
+      } else if (library === "shaka" && !window.shaka) {
+        reject(new Error("Shaka Player failed to load"));
+      } else {
+        LogService.addLog(
+          `Successfully loaded ${library} player library version ${actualVersion}`
+        );
+        resolve();
+      }
     };
 
     script.onerror = () => {

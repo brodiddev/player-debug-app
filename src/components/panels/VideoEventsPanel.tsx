@@ -21,7 +21,9 @@ const VideoEventsPanel: React.FC<VideoEventsPanelProps> = ({ events }) => (
         <tbody>
           {events.map((event, index) => (
             <tr key={index}>
-              <td>{event.time}</td>
+              <td>
+                <span className="text-sm text-gray-500">{event.time}</span>
+              </td>
               <td>{event.type}</td>
               <td>{event.currentTime.toFixed(2)}</td>
               <td>{event.description}</td>

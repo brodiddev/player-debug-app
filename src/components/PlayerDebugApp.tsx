@@ -38,8 +38,9 @@ import InfoPanel from "@/components/panels/InfoPanels";
 import LogsPanel from "@/components/panels/LogsPanel";
 import PlaybackPanel from "@/components/panels/PlaybackPanel";
 import VideoEventsPanel from "@/components/panels/VideoEventsPanel";
+import MediaChunksPanel from "@/components/panels/MediaChunkPanel";
 
-export const DEBUGGER_VERSION = "1.0.3";
+export const DEBUGGER_VERSION = "v1.0.4";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -49,6 +50,7 @@ const PlayerDebugApp: React.FC = () => {
     playback: true,
     videoEvents: true,
     logs: true,
+    mediaChunks: true,
   });
   const [configPersistenceEnabled, setConfigPersistenceEnabled] =
     useState(false);
@@ -155,7 +157,12 @@ const PlayerDebugApp: React.FC = () => {
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Video className="h-6 w-6 text-blue-400" />
-            <h1 className="text-xl font-medium">Player Debug App</h1>
+            <h1 className="text-xl font-medium">
+              Player Debug App
+              <span className="text-sm text-gray-400 ml-2">
+                {DEBUGGER_VERSION}
+              </span>
+            </h1>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm">Dark Mode</span>
@@ -258,6 +265,7 @@ const PlayerDebugApp: React.FC = () => {
           {visibleSections.videoEvents && (
             <VideoEventsPanel events={videoEvents} />
           )}
+          {visibleSections.mediaChunks && <MediaChunksPanel />}
         </div>
 
         <Alert className="mt-6">
@@ -272,7 +280,7 @@ const PlayerDebugApp: React.FC = () => {
       <footer className="bg-gray-100 dark:bg-gray-800 py-4 text-center text-sm">
         Contact:{" "}
         <a href="mailto:devuxr@naver.com" className="hover:underline">
-          devuxr@naver.com
+          brodi
         </a>
       </footer>
     </div>
