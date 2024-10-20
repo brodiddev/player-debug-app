@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { loadPlayerLibrary } from "@/components/library/libraryLoader";
 import LogService from "@/components/util/LogService";
@@ -26,6 +24,9 @@ const useVideoPlayer = () => {
     initial: 0,
     playback: 0,
   });
+
+  const [networkState, setNetworkState] = useState("0 / EMPTY");
+  const [readyState, setReadyState] = useState("0 / HAVE_NOTHING");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
@@ -56,12 +57,36 @@ const useVideoPlayer = () => {
       }));
     };
 
+    const updateNetworkAndReadyState = () => {
+      const networkStateMapping = ["EMPTY", "IDLE", "LOADING", "NO_SOURCE"];
+      const readyStateMapping = [
+        "HAVE_NOTHING",
+        "HAVE_METADATA",
+        "HAVE_CURRENT_DATA",
+        "HAVE_FUTURE_DATA",
+        "HAVE_ENOUGH_DATA",
+      ];
+
+      setNetworkState(
+        `${video.networkState} / ${networkStateMapping[video.networkState]}`
+      );
+      setReadyState(
+        `${video.readyState} / ${readyStateMapping[video.readyState]}`
+      );
+    };
+
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("waiting", handleWaiting);
+    video.addEventListener("loadeddata", updateNetworkAndReadyState);
+    video.addEventListener("play", updateNetworkAndReadyState);
+    video.addEventListener("pause", updateNetworkAndReadyState);
 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("waiting", handleWaiting);
+      video.removeEventListener("loadeddata", updateNetworkAndReadyState);
+      video.removeEventListener("play", updateNetworkAndReadyState);
+      video.removeEventListener("pause", updateNetworkAndReadyState);
     };
   }, [currentTime]);
 
@@ -87,7 +112,7 @@ const useVideoPlayer = () => {
       } else if (library === "hls" && window.Hls) {
         const customConfig = {
           ...config,
-          loader: createCustomLoader(), // 커스텀 로더를 설정
+          loader: createCustomLoader(), // 커스텀 로더 설정
         };
         LogService.addLog("Creating Hls instance with custom loader");
 
@@ -174,6 +199,8 @@ const useVideoPlayer = () => {
     showCustomVersion,
     setShowCustomVersion,
     bufferingCount,
+    networkState,
+    readyState,
     resetVideoPlayerState,
   };
 };

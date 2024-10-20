@@ -40,7 +40,7 @@ import PlaybackPanel from "@/components/panels/PlaybackPanel";
 import VideoEventsPanel from "@/components/panels/VideoEventsPanel";
 import MediaChunksPanel from "@/components/panels/MediaChunkPanel";
 
-export const DEBUGGER_VERSION = "v1.0.6";
+export const DEBUGGER_VERSION = "v1.0.7";
 
 const PlayerDebugApp: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -49,7 +49,7 @@ const PlayerDebugApp: React.FC = () => {
     info: true,
     playback: true,
     videoEvents: true,
-    logs: true,
+    // logs: true, // Log 패널은 상시 표시
     mediaChunks: true,
   });
   const [configPersistenceEnabled, setConfigPersistenceEnabled] =
@@ -76,6 +76,8 @@ const PlayerDebugApp: React.FC = () => {
     showCustomVersion,
     setShowCustomVersion,
     bufferingCount,
+    networkState,
+    readyState,
     resetVideoPlayerState,
   } = useVideoPlayer();
 
@@ -236,7 +238,7 @@ const PlayerDebugApp: React.FC = () => {
 
             {/* Logs 패널 */}
             <div className="mt-6">
-              {visibleSections.logs && <LogsPanel logs={logs} />}
+              <LogsPanel logs={logs} />
             </div>
           </div>
 
@@ -275,6 +277,8 @@ const PlayerDebugApp: React.FC = () => {
                   isMuted={isMuted}
                   setIsMuted={setIsMuted}
                   videoRef={videoRef}
+                  networkState={networkState}
+                  readyState={readyState}
                 />
               )}
               {visibleSections.videoEvents && (
